@@ -554,7 +554,7 @@
       </div>
       <div class="field">
         <label>路线类型</label>
-        <div class="rt-group">
+        <div class="rt-group" id="pressureRT" data-single="true">
           <div class="rt-chip active" data-rt="macro"><span class="swatch"></span>MACRO</div>
           <div class="rt-chip" data-rt="micro"><span class="swatch"></span>MICRO</div>
         </div>
@@ -950,7 +950,12 @@
     legendBox.innerHTML = cfg.legend;
     // 路线染色：压力模式用 Viridis+log（每条独立色），其他模式用统一色
     if (mode === 'pressure') {
-      applyColormap();
+      // 切到压力模式：重置路线类型为 macro 单选
+      const prt = document.getElementById('pressureRT');
+      if (prt) {
+        prt.querySelectorAll('.rt-chip').forEach(c => c.classList.toggle('active', c.dataset.rt === 'macro'));
+      }
+      renderRouteByType('macro');
     } else if (routeLines) {
       routeLines.setAttribute('stroke', cfg.routeColor);
     }
@@ -978,10 +983,93 @@
     });
   });
 
-  // 路线类型多选
+  // 路线类型切换：压力模式(macro/micro)单选互斥，其他模式多选
   document.querySelectorAll('.rt-chip').forEach(chip => {
-    chip.addEventListener('click', () => chip.classList.toggle('active'));
+    chip.addEventListener('click', () => {
+      const group = chip.closest('.rt-group');
+      const isSingle = group && group.dataset.single === 'true';
+      if (isSingle) {
+        // 单选：先清除同组所有 active，再点亮当前
+        group.querySelectorAll('.rt-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        // 联动路线渲染：macro 整条 / micro 分解
+        renderRouteByType(chip.dataset.rt);
+      } else {
+        chip.classList.toggle('active');
+      }
+    });
   });
+
+  // ===== micro 是 macro 的分解：按路线类型渲染 =====
+  // macro 数据：整条宏观路线（STK → MIFA）
+  const MACRO_ROUTES = [
+    {d:'M97,97 Q200,200 275,400', count:89},
+    {d:'M182,97 Q230,220 275,400', count:1200},
+    {d:'M407,97 Q340,230 275,400', count:3000},
+    {d:'M492,97 Q560,230 625,400', count:500},
+    {d:'M717,97 Q680,230 625,400', count:2330},
+    {d:'M97,227 Q180,320 275,400', count:34},
+    {d:'M182,227 Q220,320 275,400', count:156},
+  ];
+  // micro 数据：把每条 macro 分解成多段（STK→Port→LIFT→Port→MIFA），用折线表示分解
+  // 以 macro 索引为键，每段带子频次
+  const MICRO_ROUTES = [
+    // macro[0] STK-A01→MIFA-01 分解为 3 段
+    [{d:'M97,97 L160,150', count:52},{d:'M160,150 L220,280', count:48},{d:'M220,280 L275,400', count:45}],
+    // macro[1] STK-A02→MIFA-01 分解为 3 段
+    [{d:'M182,97 L240,180', count:680},{d:'M240,180 L260,300', count:620},{d:'M260,300 L275,400', count:600}],
+    // macro[2] STK-C01→MIFA-01 分解为 4 段（经过 LIFT）
+    [{d:'M407,97 L380,160', count:1600},{d:'M380,160 L330,240', count:1550},{d:'M330,240 L300,330', count:1500},{d:'M300,330 L275,400', count:1500}],
+    // macro[3] STK-C02→MIFA-02 分解为 3 段
+    [{d:'M492,97 L540,180', count:280},{d:'M540,180 L590,300', count:260},{d:'M590,300 L625,400', count:250}],
+    // macro[4] STK-D01→MIFA-02 分解为 3 段
+    [{d:'M717,97 L680,180', count:1200},{d:'M680,180 L650,300', count:1180},{d:'M650,300 L625,400', count:1160}],
+    // macro[5] STK-B01→MIFA-01 分解为 2 段
+    [{d:'M97,227 L180,320', count:20},{d:'M180,320 L275,400', count:18}],
+    // macro[6] STK-B02→MIFA-01 分解为 2 段
+    [{d:'M182,227 L230,320', count:90},{d:'M230,320 L275,400', count:85}],
+  ];
+  function renderRouteByType(type){
+    if (!routeLines) return;
+    routeLines.innerHTML = '';
+    const NS = 'http://www.w3.org/2000/svg';
+    const data = type === 'micro' ? MICRO_ROUTES.flat() : MACRO_ROUTES;
+    const counts = data.map(r => r.count).filter(c => c > 0);
+    const maxC = counts.length ? Math.max(...counts) : 1;
+    data.forEach(r => {
+      const p = document.createElementNS(NS, 'path');
+      p.setAttribute('d', r.d);
+      p.setAttribute('data-count', r.count);
+      p.setAttribute('fill', 'none');
+      // micro 段用稍细的线 + 小圆点标记分解节点
+      routeLines.appendChild(p);
+      if (type === 'micro') {
+        // 在每段起点画小圆点表示分解节点
+        const m = r.d.match(/M([\d.]+),([\d.]+)/);
+        if (m) {
+          const dot = document.createElementNS(NS, 'circle');
+          dot.setAttribute('cx', m[1]); dot.setAttribute('cy', m[2]);
+          dot.setAttribute('r', 2.5); dot.setAttribute('fill', '#4caf50'); dot.setAttribute('opacity', 0.8);
+          routeLines.appendChild(dot);
+        }
+      }
+    });
+    applyColormap();
+    // micro 模式时图例补充说明
+    if (type === 'micro') {
+      const legendExtra = legendBox.querySelector('.micro-hint');
+      if (!legendExtra) {
+        const hint = document.createElement('div');
+        hint.className = 'micro-hint';
+        hint.style.cssText = 'margin-top:6px;border-top:1px solid var(--border);padding-top:4px;color:var(--rt-micro);font-size:10px';
+        hint.textContent = 'MICRO = MACRO 的分解（绿点=分解节点）';
+        legendBox.appendChild(hint);
+      }
+    } else {
+      const legendExtra = legendBox.querySelector('.micro-hint');
+      if (legendExtra) legendExtra.remove();
+    }
+  }
 
   // 初始化：渲染双向流动边 + Viridis 染色
   renderBidirDemo();
