@@ -46,6 +46,16 @@
   .legend .scale{display:flex;justify-content:space-between;color:var(--dim);font-size:9px}
   .note{padding:8px 12px;background:rgba(0,229,255,0.06);border-left:3px solid var(--accent);font-size:11px;color:var(--dim);line-height:1.6;margin:8px 0}
   .badge{position:absolute;right:14px;top:14px;background:rgba(0,229,255,0.15);border:1px solid var(--accent);color:var(--accent);padding:4px 12px;border-radius:12px;font-size:11px}
+
+  /* ===== 真实SVG节点高对比度配色（替代原项目缺失的class样式） ===== */
+  /* 背景层：节点用高对比色，让站点清晰可见 */
+  #bg-layer .stocker-body{fill:#1a5fb4 !important;stroke:#4cc2ff !important;stroke-width:0.4 !important}
+  #bg-layer .lift-body{fill:#8e44ad !important;stroke:#d49aff !important;stroke-width:0.4 !important}
+  #bg-layer .mifa-body{fill:#e67e22 !important;stroke:#ffc04d !important;stroke-width:0.4 !important}
+  #bg-layer .area-node{fill:#0e7c7b !important;stroke:#4dd0d0 !important;stroke-width:0.35 !important}
+  #bg-layer .port-node{fill:#2e7d32 !important;stroke:#7fd47f !important;stroke-width:0.3 !important}
+  #bg-layer .equipment-group text{fill:#e6e9ef !important;font-weight:bold !important}
+  #bg-layer text{fill:#b8c2d0 !important}
 </style>
 </head>
 <body>
@@ -159,9 +169,9 @@ async function init(){
   const parser=new DOMParser();
   const doc=parser.parseFromString(svgText,'image/svg+xml');
   const srcSvg=doc.querySelector('svg');
-  // 把原始节点放入背景层（弱化显示）
+  // 把原始节点放入背景层（节点高对比配色，opacity 0.85 保证清晰）
   const bg=mk('g',{id:'bg-layer'});
-  bg.setAttribute('opacity','0.35');
+  bg.setAttribute('opacity','0.85');
   [...srcSvg.children].forEach(c=>bg.appendChild(c));
   svg.appendChild(bg);
   SVG_LOADED=true;
