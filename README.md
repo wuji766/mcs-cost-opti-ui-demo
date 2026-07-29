@@ -31,8 +31,12 @@ python -m http.server 8080
 ├── index.html              # 首页
 ├── task-cost-merge.html    # 任务分析 + Cost 编辑（三模式）
 ├── cost-apply.html         # Cost 上线管理（记录+回退）
+├── real-viz.html           # 真实数据可视化（直方图均衡化+双向边）
 └── assets/
-    └── app.css             # 共享样式（含仓库布局的内嵌示意 SVG）
+    ├── app.css             # 共享样式
+    ├── mcs_layout_min.svg  # 真实仓库布局 SVG（原项目同步）
+    ├── real_edges.json     # 真实边数据（368边，来自 PG）
+    └── real_layout.json    # 真实节点坐标（从 SVG 提取，252节点）
 ```
 
 ## ⚠️ 说明

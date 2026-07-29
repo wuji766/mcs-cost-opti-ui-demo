@@ -59,7 +59,7 @@
 </div>
 <div class="main">
   <div class="left">
-    <svg id="svg" viewBox="0 0 1200 800"></svg>
+    <svg id="svg" viewBox="0 0 297 210" preserveAspectRatio="xMidYMid meet"></svg>
     <div class="badge" id="modeBadge">直方图均衡化 + Viridis</div>
     <div class="legend" id="legend"></div>
   </div>
@@ -102,6 +102,7 @@
         <div class="item">显示边数<b id="sShow">0</b></div>
         <div class="item">双向对<b id="sPair">0</b></div>
         <div class="item">节点<b id="sNode">0</b></div>
+        <div class="item">未映射<b id="sUnmapped" style="color:#f44336">0</b></div>
       </div>
       <div class="note" id="cmpNote">直方图均衡化：每个色阶覆盖相近数量的边（~37条/档），彻底解决长尾分布下低频边挤一团的问题。</div>
       <div id="edgeList"></div>
@@ -143,13 +144,27 @@ function colorOf(e){
 }
 
 // 加载数据
+let SVG_LOADED = false;
 async function init(){
-  const [eRes,lRes]=await Promise.all([
+  const [eRes,lRes,svgText]=await Promise.all([
     fetch('assets/real_edges.json').then(r=>r.json()),
-    fetch('assets/real_layout.json').then(r=>r.json())
+    fetch('assets/real_layout.json').then(r=>r.json()),
+    fetch('assets/mcs_layout_min.svg').then(r=>r.text())
   ]);
   EDGES=eRes.edges;
   LAYOUT=lRes;
+  // 嵌入真实仓库 SVG 布局作为背景
+  const svg=document.getElementById('svg');
+  // 解析真实 SVG，把它的内容导入主 svg（保留 viewBox 0 0 297 210）
+  const parser=new DOMParser();
+  const doc=parser.parseFromString(svgText,'image/svg+xml');
+  const srcSvg=doc.querySelector('svg');
+  // 把原始节点放入背景层（弱化显示）
+  const bg=mk('g',{id:'bg-layer'});
+  bg.setAttribute('opacity','0.35');
+  [...srcSvg.children].forEach(c=>bg.appendChild(c));
+  svg.appendChild(bg);
+  SVG_LOADED=true;
   buildCDF();
   document.getElementById('cntAll').textContent=EDGES.length;
   // 双向对统计
@@ -164,9 +179,8 @@ function mk(t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAt
 
 function render(){
   const svg=document.getElementById('svg');
-  svg.innerHTML='';
-  // defs
-  const defs=mk('defs');svg.appendChild(defs);
+  // 保留背景层(#bg-layer)，只清除边层和提示层
+  ['edge-layer','unmapped-layer'].forEach(id=>{const el=svg.querySelector('#'+id);if(el)el.remove();});
 
   // 过滤边
   let edges=EDGES.filter(e=>e.count>=thresh);
@@ -178,27 +192,17 @@ function render(){
     edges=edges.filter(e=>bidirKeys.has([e.from,e.to].sort().join('|')));
   }
 
-  // 画节点（只画涉及的）
+  // 节点不再自己画（真实SVG背景已含节点），只统计
   const nodeSet=new Set();
   edges.forEach(e=>{nodeSet.add(e.from);nodeSet.add(e.to);});
-  const ng=mk('g',{id:'nodes'});
-  nodeSet.forEach(nid=>{
-    const p=LAYOUT[nid];if(!p)return;
-    const isArea=p.type==='AREA';
-    const node=mk(isArea?'rect':'circle');
-    if(isArea){node.setAttribute('x',p.x-8);node.setAttribute('y',p.y-5);node.setAttribute('width',16);node.setAttribute('height',10);node.setAttribute('rx',2);}
-    else{node.setAttribute('cx',p.x);node.setAttribute('cy',p.y);node.setAttribute('r',3.5);}
-    node.setAttribute('fill',isArea?'#1b3a5c':'#2d5a2d');
-    node.setAttribute('stroke',isArea?'#2196f3':'#4caf50');
-    node.setAttribute('stroke-width',0.8);
-    ng.appendChild(node);
-  });
-  svg.appendChild(ng);
 
-  // 画边
-  const eg=mk('g',{id:'edges'});
+  // 画边（叠加在背景层之上）
+  const eg=mk('g',{id:'edge-layer'});
   const renderedKeys=new Set();
+  let unmappedCount=0;
   edges.forEach(e=>{
+    const p1=LAYOUT[e.from],p2=LAYOUT[e.to];
+    if(!p1||!p2){unmappedCount++;return;}  // 未映射边跳过并计数
     const key=[e.from,e.to].sort().join('|');
     const pair=pairs[key]||[];
     const isBidir=pair.length>=2;
@@ -211,17 +215,27 @@ function render(){
     } else if(curBD==='flow'){
       drawFlowEdge(eg,e,colorOf(e));
     } else {
-      // parallel 或默认：双向各自偏移
-      const offset=isBidir?5:0;
+      // parallel 或默认：双向各自偏移（viewBox 缩小后 offset=1.2）
+      const offset=isBidir?1.2:0;
       drawEdge(eg,e,colorOf(e),offset);
     }
   });
   svg.appendChild(eg);
 
+  // 未映射边提示（难点1：可视化缺失，不静默丢弃）
+  if(unmappedCount>0){
+    const ul=mk('g',{id:'unmapped-layer'});
+    const badge=mk('text',{x:200,y:14,'text-anchor':'end',fill:'#f44336','font-size':4,'font-weight':'bold'});
+    badge.textContent=`⚠️ ${unmappedCount} 边未映射`;
+    ul.appendChild(badge);
+    svg.appendChild(ul);
+  }
+
   // 统计
   document.getElementById('sShow').textContent=edges.length;
   document.getElementById('sPair').textContent=Object.values(pairs).filter(v=>v.length>=2).length;
   document.getElementById('sNode').textContent=nodeSet.size;
+  const um=document.getElementById('sUnmapped'); if(um) um.textContent=unmappedCount;
 
   // 边列表（top 15）
   const list=document.getElementById('edgeList');
@@ -239,24 +253,25 @@ function drawEdge(g,e,color,offset){
   const p1=LAYOUT[e.from],p2=LAYOUT[e.to];if(!p1||!p2)return;
   let x1=p1.x,y1=p1.y,x2=p2.x,y2=p2.y;
   if(offset){const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy);if(len===0)return;const nx=-dy/len,ny=dx/len;x1+=nx*offset;y1+=ny*offset;x2+=nx*offset;y2+=ny*offset;}
-  const path=mk('path',{d:`M${x1} ${y1} L${x2} ${y2}`,stroke:color,'stroke-width':Math.max(0.6,Math.log(1+e.count)/Math.log(1+100)*1.5),fill:'none',opacity:0.7,'stroke-linecap':'round'});
+  // viewBox 297x210，线宽按比例缩小（0.15~0.6）
+  const path=mk('path',{d:`M${x1} ${y1} L${x2} ${y2}`,stroke:color,'stroke-width':Math.max(0.15,Math.log(1+e.count)/Math.log(1+100)*0.45),fill:'none',opacity:0.75,'stroke-linecap':'round'});
   g.appendChild(path);
 }
 
 function drawFlowEdge(g,e,color){
   const p1=LAYOUT[e.from],p2=LAYOUT[e.to];if(!p1||!p2)return;
-  const offset=4;
+  const offset=1.2;  // 双向偏移按比例缩小
   const dx=p2.x-p1.x,dy=p2.y-p1.y,len=Math.sqrt(dx*dx+dy*dy);if(len===0)return;
   const nx=-dy/len,ny=dx/len;
   const x1=p1.x+nx*offset,y1=p1.y+ny*offset,x2=p2.x+nx*offset,y2=p2.y+ny*offset;
   // 底线
-  g.appendChild(mk('line',{x1,y1,x2,y2,stroke:color,'stroke-width':1.2,opacity:0.3,'stroke-linecap':'round'}));
-  // 流动箭头（慢速 6s）
+  g.appendChild(mk('line',{x1,y1,x2,y2,stroke:color,'stroke-width':0.3,opacity:0.3,'stroke-linecap':'round'}));
+  // 流动箭头（慢速 6s，三角形尺寸按比例缩小）
   const dur='6s',n=2;
   for(let i=0;i<n;i++){
     const f=mk('g',{opacity:0});
-    f.appendChild(mk('polygon',{points:'-4,-3 5,0 -4,3',fill:color,opacity:0.95}));
-    f.appendChild(mk('polygon',{points:'-6,-5 7,0 -6,5',fill:color,opacity:0.2}));
+    f.appendChild(mk('polygon',{points:'-1,-0.7 1.2,0 -1,0.7',fill:color,opacity:0.95}));
+    f.appendChild(mk('polygon',{points:'-1.5,-1.1 1.7,0 -1.5,1.1',fill:color,opacity:0.2}));
     const begin=(i*6/n).toFixed(2)+'s';
     const amp=mk('animateMotion',{dur,repeatCount:'indefinite',begin,path:`M${x1} ${y1} L${x2} ${y2}`,rotate:'auto'});
     f.appendChild(amp);
