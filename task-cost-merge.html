@@ -1,0 +1,897 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>任务分析 & Cost 编辑 · MCS Demo</title>
+<link rel="stylesheet" href="assets/app.css" />
+<style>
+  :root {
+    --bg: #0f1419;
+    --panel: #1a1f26;
+    --panel-2: #222831;
+    --border: #2d3441;
+    --text: #e6e9ef;
+    --text-dim: #8b95a7;
+    --accent: #00e5ff;
+    --accent-2: #ffb300;
+    --success: #4caf50;
+    --danger: #f44336;
+    --warn: #ff9800;
+    --info: #2196f3;
+    /* 三大模式色（呼应设计稿红色重点） */
+    --mode-pressure: #e03131;   /* 历史压力分析 - 红（设计稿重点色） */
+    --mode-cost: #1976d2;       /* COST调整 - 蓝 */
+    --mode-sim: #7b1fa2;        /* 调整仿真 - 紫 */
+    /* 路线类型色 */
+    --rt-macro: #2196f3;
+    --rt-micro: #4caf50;
+    --rt-planned: #ff9800;
+    --rt-cost: #e91e63;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100vh; }
+  body {
+    font-family: 'Microsoft YaHei', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    height: 100vh;
+    overflow: hidden;
+    font-size: 13px;
+  }
+
+  /* ===== 顶部模式选择条（设计稿核心：三大模式互斥） ===== */
+  .mode-bar {
+    height: 100px;
+    background: linear-gradient(180deg, #0d4a4f, #0a3d5c);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 10px 0 0 0;  /* 顶部留白，按钮不贴浏览器最顶端 */
+  }
+  /* 第一行：Logo + 三大模式 Tab + 全局控件 */
+  .mode-bar .row1 {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    position: relative;
+    z-index: 20;  /* 提高层级，确保模式按钮始终可点击，不被 row2 遮挡 */
+    flex-shrink: 0;
+  }
+  .logo {
+    font-weight: bold;
+    color: var(--accent);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+  .logo .dot {
+    width: 8px; height: 8px;
+    background: var(--success);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--success);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* 三大模式切换（互斥 radio） */
+  .mode-tabs {
+    display: flex;
+    background: rgba(0,0,0,0.3);
+    border-radius: 6px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .mode-tab {
+    padding: 7px 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s;
+    border: none;
+    background: transparent;
+  }
+  .mode-tab .mi { font-size: 15px; }
+  .mode-tab:hover { color: var(--text); }
+  .mode-tab.active { color: #fff; font-weight: bold; }
+  .mode-tab[data-mode="pressure"].active { background: var(--mode-pressure); }
+  .mode-tab[data-mode="cost"].active { background: var(--mode-cost); }
+  .mode-tab[data-mode="sim"].active { background: var(--mode-sim); }
+
+  .row1 .spacer { flex: 1; }
+  .row1 .global-ctrl {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .stat-pill {
+    background: rgba(0,229,255,0.1);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  /* 第二行：子模式 + 上下文控件（随主模式变化） */
+  .mode-bar .row2 {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 14px;
+    background: rgba(0,0,0,0.2);
+    flex-shrink: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    position: relative;
+    z-index: 10;
+  }
+  .mode-bar .row2 .ctx {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: nowrap;
+  }
+  .field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-dim);
+    font-size: 12px;
+  }
+  .field label { white-space: nowrap; }
+  select, input[type="text"], input[type="number"] {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 8px;
+    border-radius: 3px;
+    font-size: 12px;
+    outline: none;
+  }
+  select:focus, input:focus { border-color: var(--accent); }
+
+  /* 子模式切换（小型 chip） */
+  .submode-group {
+    display: flex;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px;
+    gap: 1px;
+  }
+  .submode-chip {
+    padding: 4px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-dim);
+    transition: all 0.15s;
+  }
+  .submode-chip.active {
+    background: var(--accent);
+    color: #000;
+    font-weight: bold;
+  }
+
+  /* 路线类型多选（COST类型选择） */
+  .rt-group {
+    display: flex;
+    gap: 2px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px;
+  }
+  .rt-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 12px;
+    color: var(--text-dim);
+    transition: all 0.15s;
+  }
+  .rt-chip .swatch {
+    width: 12px; height: 3px;
+    border-radius: 2px;
+  }
+  .rt-chip.active { background: rgba(255,255,255,0.08); color: var(--text); }
+  .rt-chip[data-rt="macro"] .swatch { background: var(--rt-macro); }
+  .rt-chip[data-rt="micro"] .swatch { background: var(--rt-micro); }
+  .rt-chip[data-rt="planned"] .swatch { background: var(--rt-planned); }
+  .rt-chip[data-rt="cost"] .swatch { background: var(--rt-cost); }
+  .rt-chip.active[data-rt="macro"] { color: var(--rt-macro); }
+  .rt-chip.active[data-rt="micro"] { color: var(--rt-micro); }
+  .rt-chip.active[data-rt="planned"] { color: var(--rt-planned); }
+  .rt-chip.active[data-rt="cost"] { color: var(--rt-cost); }
+
+  .btn {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.15s;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-primary { background: var(--accent); color:#000; border-color:var(--accent); font-weight:bold;}
+  .btn-primary:hover { background:#4dd8e8; color:#000;}
+  .btn-sm { padding: 3px 8px; font-size: 11px; }
+  .btn-danger { color: var(--danger); border-color: var(--danger); }
+
+  /* 频次阈值滑块 */
+  .freq-slider {
+    display: flex; align-items: center; gap: 6px;
+  }
+  .freq-slider input[type="range"] { width: 80px; accent-color: var(--accent); }
+  .freq-slider .val { color: var(--accent); font-size: 11px; min-width: 28px; font-family: Consolas; }
+
+  /* ===== 主体区域 ===== */
+  .main {
+    display: flex;
+    height: calc(100vh - 144px);
+    overflow: hidden;
+  }
+
+  /* 左侧路由展示区 */
+  .route-area {
+    flex: 1;
+    position: relative;
+    background: #0a0e13;
+    overflow: hidden;
+    min-width: 300px;
+  }
+  .route-area svg { width: 100%; height: 100%; display: block; }
+
+  /* 模式标识（左上角，显示当前模式） */
+  .mode-indicator {
+    position: absolute;
+    left: 16px; top: 16px;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #fff;
+    backdrop-filter: blur(4px);
+  }
+  .mode-indicator.pressure { background: rgba(224,49,49,0.85); }
+  .mode-indicator.cost { background: rgba(25,118,210,0.85); }
+  .mode-indicator.sim { background: rgba(123,31,162,0.85); }
+
+  /* 图例 */
+  .legend-box {
+    position: absolute;
+    left: 16px; top: 60px;
+    background: rgba(26,31,38,0.92);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px 10px;
+    backdrop-filter: blur(4px);
+    font-size: 11px;
+  }
+  .legend-box .lg-title { color: var(--text-dim); margin-bottom: 6px; font-size: 10px; }
+  .legend-row { display: flex; align-items: center; gap: 6px; margin: 3px 0; }
+  .legend-row .line { width: 20px; height: 3px; border-radius: 2px; }
+  .legend-row .grad {
+    width: 60px; height: 8px; border-radius: 2px;
+    background: linear-gradient(90deg, #2196f3, #4caf50, #ff9800, #f44336);
+  }
+
+  /* 缩放按钮 */
+  .viewport-actions {
+    position: absolute;
+    right: 16px; bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .va-btn {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: rgba(26,31,38,0.9);
+    border: 1px solid var(--border);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .va-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* 边详情浮层（点击边弹出） */
+  .edge-popup {
+    position: absolute;
+    right: 16px; top: 60px;
+    width: 240px;
+    background: rgba(26,31,38,0.96);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 10px;
+    backdrop-filter: blur(4px);
+    font-size: 11px;
+  }
+  .edge-popup .ep-title {
+    color: var(--accent); font-weight: bold; margin-bottom: 6px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .edge-popup .ep-row { display: flex; justify-content: space-between; padding: 2px 0; }
+  .edge-popup .ep-row .k { color: var(--text-dim); }
+  .edge-popup .ep-row .v { font-family: Consolas; }
+  .edge-popup .ep-row .v.hl { color: var(--accent); font-weight: bold; }
+
+  /* 右侧 COST 编辑区（按模式显隐） */
+  .cost-editor {
+    width: 340px;
+    background: var(--panel);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .ce-header {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel-2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .ce-header .ce-title { font-weight: bold; font-size: 13px; }
+  .ce-header .ce-actions { display: flex; gap: 4px; }
+
+  .ce-filter {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    background: rgba(0,0,0,0.15);
+  }
+  .ce-filter input { flex: 1; }
+
+  .ce-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px;
+  }
+  .ce-body::-webkit-scrollbar { width: 6px; }
+  .ce-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .ce-group { margin-bottom: 10px; }
+  .ce-group .ceg-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 5px 8px;
+    background: var(--panel-2);
+    border-left: 3px solid var(--accent);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: bold;
+    border-radius: 2px;
+  }
+  .ce-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .ce-row:hover { background: rgba(0,229,255,0.06); }
+  .ce-row.highlighted { background: rgba(255,179,0,0.15); border-left: 2px solid var(--accent-2); }
+  .ce-row.dirty { background: rgba(255,152,0,0.1); }
+  .ce-row .cer-route { font-family: Consolas; font-size: 11px; }
+  .ce-row .cer-meta { display: flex; gap: 8px; align-items: center; }
+  .ce-row .cer-count { color: var(--accent); font-weight: bold; font-size: 11px; }
+  .ce-row .cer-cost { font-family: Consolas; color: var(--accent-2); }
+  .ce-row input[type="number"] { width: 60px; padding: 2px 4px; font-size: 11px; }
+
+  /* 保存浮动条 */
+  .save-bar {
+    position: absolute;
+    left: 50%; transform: translateX(-50%);
+    bottom: 16px;
+    background: var(--accent-2);
+    color: #000;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(255,179,0,0.4);
+    display: none;
+    align-items: center;
+    gap: 10px;
+    z-index: 10;
+  }
+  .save-bar.show { display: flex; }
+
+  /* 仿真结果区（调整仿真模式专用） */
+  .sim-result {
+    width: 340px;
+    background: var(--panel);
+    border-left: 1px solid var(--mode-sim);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .sim-result .sr-header {
+    padding: 10px 12px;
+    background: rgba(123,31,162,0.2);
+    border-bottom: 1px solid var(--mode-sim);
+    font-weight: bold;
+    color: #ce93d8;
+    font-size: 13px;
+  }
+  .sim-result .sr-body { flex: 1; overflow-y: auto; padding: 12px; }
+  .sim-compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .sim-card {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 8px;
+    text-align: center;
+  }
+  .sim-card .sc-label { font-size: 10px; color: var(--text-dim); }
+  .sim-card .sc-val { font-size: 18px; font-weight: bold; }
+  .sim-card.baseline .sc-val { color: var(--info); }
+  .sim-card.candidate .sc-val { color: var(--success); }
+  .sim-diff {
+    background: var(--panel-2);
+    border-radius: 4px;
+    padding: 8px;
+    font-family: Consolas;
+    font-size: 11px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .sim-diff .drow { display: flex; justify-content: space-between; padding: 2px 4px; }
+  .sim-diff .drow:hover { background: rgba(255,255,255,0.04); }
+  .sim-diff .up { color: var(--danger); }
+  .sim-diff .down { color: var(--success); }
+
+  /* 隐藏类 */
+  .hidden { display: none !important; }
+
+  /* 设计标注（说明用） */
+  .annotation {
+    position: absolute;
+    background: var(--accent-2);
+    color: #000;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: bold;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    pointer-events: none;
+  }
+
+  .preview-note {
+    position: fixed;
+    bottom: 10px; right: 10px;
+    background: rgba(224,49,49,0.92);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    z-index: 100;
+    max-width: 280px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== 全局导航 ===== -->
+<nav class="app-nav">
+  <div class="logo"><span class="dot"></span>MCS 搬送监控</div>
+  <div class="nav-links">
+    <a href="index.html">🏠 首页</a>
+    <a class="active">🔬 任务&amp;Cost</a>
+    <a href="cost-apply.html">🚀 Cost 上线</a>
+  </div>
+  <div class="spacer"></div>
+  <div class="user">UI Demo</div>
+</nav>
+
+<!-- ===== 顶部模式选择条（设计稿核心） ===== -->
+<div class="mode-bar">
+  <!-- 第一行 -->
+  <div class="row1">
+    <div class="logo"><span class="dot"></span>MCS 搬送监控</div>
+
+    <!-- 三大模式互斥切换 -->
+    <div class="mode-tabs">
+      <button class="mode-tab active" data-mode="pressure" onclick="switchMode('pressure')"><span class="mi">📊</span>历史压力分析</button>
+      <button class="mode-tab" data-mode="cost" onclick="switchMode('cost')"><span class="mi">✏️</span>COST调整</button>
+      <button class="mode-tab" data-mode="sim" onclick="switchMode('sim')"><span class="mi">🧪</span>调整仿真</button>
+    </div>
+
+    <div class="spacer"></div>
+
+    <div class="global-ctrl">
+      <span class="stat-pill">有效边 1,234</span>
+      <span class="stat-pill">可达率 93.4%</span>
+    </div>
+  </div>
+
+  <!-- 第二行：子模式 + 上下文控件（随主模式变化，JS 控制） -->
+  <div class="row2" id="contextBar">
+
+    <!-- ===== 历史压力分析 模式的控件 ===== -->
+    <div class="ctx ctx-pressure">
+      <div class="field">
+        <label>数据集时间范围</label>
+        <input type="text" value="07-01 08:00" style="width:110px"/> ~ <input type="text" value="07-01 20:00" style="width:110px"/>
+      </div>
+      <div class="field">
+        <label>子模式</label>
+        <div class="submode-group">
+          <div class="submode-chip active" data-sub="pressure">压力</div>
+          <div class="submode-chip" data-sub="time">时间</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>路线类型</label>
+        <div class="rt-group">
+          <div class="rt-chip active" data-rt="macro"><span class="swatch"></span>MACRO</div>
+          <div class="rt-chip" data-rt="micro"><span class="swatch"></span>MICRO</div>
+        </div>
+      </div>
+      <div class="freq-slider">
+        <label style="color:var(--text-dim)">最低频次</label>
+        <input type="range" min="0" max="500" value="50"/>
+        <span class="val">≥50</span>
+      </div>
+      <button class="btn btn-primary">🔍 查询</button>
+    </div>
+
+    <!-- ===== COST调整 模式的控件 ===== -->
+    <div class="ctx ctx-cost hidden">
+      <div class="field">
+        <label>COST版本</label>
+        <select>
+          <option>v2.1 减少绕行 [当前]</option>
+          <option>系统基线</option>
+          <option>+ 从系统配置新建...</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>子模式</label>
+        <div class="submode-group">
+          <div class="submode-chip active" data-sub="macro">MACRO</div>
+          <div class="submode-chip" data-sub="micro">MICRO</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>COST类型选择</label>
+        <div class="rt-group">
+          <div class="rt-chip active" data-rt="macro"><span class="swatch"></span>历史</div>
+          <div class="rt-chip active" data-rt="cost"><span class="swatch"></span>COST边</div>
+          <div class="rt-chip" data-rt="planned"><span class="swatch"></span>规划</div>
+        </div>
+      </div>
+      <button class="btn">📝 备注</button>
+      <button class="btn btn-danger">🗑 删除版本</button>
+      <button class="btn btn-primary">🔍 查询</button>
+    </div>
+
+    <!-- ===== 调整仿真 模式的控件 ===== -->
+    <div class="ctx ctx-sim hidden">
+      <div class="field">
+        <label>基线版本</label>
+        <select><option>v2.1 减少绕行</option></select>
+      </div>
+      <div class="field">
+        <label>仿真窗口</label>
+        <input type="text" value="07-01 08:00" style="width:110px"/> ~ <input type="text" value="07-01 20:00" style="width:110px"/>
+      </div>
+      <div class="field">
+        <label>算法</label>
+        <select><option>CMA-ES</option></select>
+      </div>
+      <div class="field">
+        <label>对比视图</label>
+        <div class="submode-group">
+          <div class="submode-chip active" data-sub="diff">差异</div>
+          <div class="submode-chip" data-sub="baseline">基线</div>
+          <div class="submode-chip" data-sub="candidate">候选</div>
+        </div>
+      </div>
+      <button class="btn btn-primary">▶ 运行仿真</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===== 主体 ===== -->
+<div class="main">
+
+  <!-- 左侧：路由展示区（所有模式都在） -->
+  <div class="route-area" id="routeArea">
+    <!-- 模式标识 -->
+    <div class="mode-indicator pressure" id="modeIndicator">📊 历史压力分析 · 压力子模式</div>
+
+    <!-- 图例（随模式变化） -->
+    <div class="legend-box" id="legendBox">
+      <div class="lg-title">频次热力图例</div>
+      <div class="legend-row"><span class="grad"></span></div>
+      <div style="display:flex; justify-content:space-between; color:var(--text-dim); font-size:10px; margin-top:2px">
+        <span>低频</span><span>高频</span>
+      </div>
+    </div>
+
+    <!-- 示意 SVG（仓库布局 + 路线） -->
+    <svg viewBox="0 0 900 540" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr-b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#2196f3"/></marker>
+        <marker id="arr-c" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#e91e63"/></marker>
+      </defs>
+      <!-- 仓库房间 -->
+      <g stroke="#2d3441" fill="#15191f" stroke-width="1">
+        <rect x="40" y="50" width="200" height="110" rx="4"/>
+        <rect x="40" y="180" width="200" height="110" rx="4"/>
+        <rect x="350" y="50" width="200" height="110" rx="4"/>
+        <rect x="350" y="180" width="200" height="110" rx="4"/>
+        <rect x="660" y="50" width="200" height="110" rx="4"/>
+        <rect x="200" y="360" width="500" height="150" rx="4"/>
+      </g>
+      <!-- 设备节点 -->
+      <g font-size="9" font-family="Consolas" text-anchor="middle">
+        <g><rect x="70" y="75" width="55" height="22" fill="#1b3a5c" stroke="#2196f3"/><text x="97" y="90" fill="#8be9fd">STK-A01</text></g>
+        <g><rect x="155" y="75" width="55" height="22" fill="#1b3a5c" stroke="#2196f3"/><text x="182" y="90" fill="#8be9fd">STK-A02</text></g>
+        <g><rect x="70" y="205" width="55" height="22" fill="#1b3a5c" stroke="#2196f3"/><text x="97" y="220" fill="#8be9fd">STK-B01</text></g>
+        <g><rect x="155" y="205" width="55" height="22" fill="#1b3a5c" stroke="#2196f3"/><text x="182" y="220" fill="#8be9fd">STK-B02</text></g>
+        <g><rect x="380" y="75" width="55" height="22" fill="#1b3a5c" stroke="#2196f3"/><text x="407" y="90" fill="#8be9fd">STK-C01</text></g>
+        <g><rect x="465" y="75" width="55" height="22" fill="#1b3a5c" stroke="#2196f3"/><text x="492" y="90" fill="#8be9fd">STK-C02</text></g>
+        <g><rect x="690" y="75" width="55" height="22" fill="#1b3a5c" stroke="#2196f3"/><text x="717" y="90" fill="#8be9fd">STK-D01</text></g>
+        <g><rect x="775" y="75" width="55" height="22" fill="#1b3a5c" stroke="#2196f3"/><text x="802" y="90" fill="#8be9fd">STK-D02</text></g>
+        <g><rect x="230" y="400" width="90" height="26" fill="#3d2b1b" stroke="#ff9800"/><text x="275" y="417" fill="#ffb74d">MIFA-01</text></g>
+        <g><rect x="580" y="400" width="90" height="26" fill="#3d2b1b" stroke="#ff9800"/><text x="625" y="417" fill="#ffb74d">MIFA-02</text></g>
+      </g>
+      <!-- 路线（默认压力模式：蓝色按频次粗细） -->
+      <g id="routeLines" stroke="#2196f3" stroke-width="2.5" fill="none" opacity="0.75" marker-end="url(#arr-b)">
+        <path d="M97,97 Q200,200 275,400" stroke-width="2"/>
+        <path d="M182,97 Q230,220 275,400" stroke-width="3.5"/>
+        <path d="M407,97 Q340,230 275,400" stroke-width="4"/>
+        <path d="M492,97 Q560,230 625,400" stroke-width="3"/>
+        <path d="M717,97 Q680,230 625,400" stroke-width="4"/>
+        <path d="M97,227 Q180,320 275,400" stroke-width="2"/>
+        <path d="M182,227 Q220,320 275,400" stroke-width="2.5"/>
+      </g>
+      <!-- 高亮某条边 -->
+      <path d="M407,97 Q340,230 275,400" stroke="#ffb300" stroke-width="4.5" fill="none" opacity="0.7">
+        <animate attributeName="opacity" values="0.3;0.8;0.3" dur="1.5s" repeatCount="indefinite"/>
+      </path>
+    </svg>
+
+    <!-- 边详情浮层（点击边） -->
+    <div class="edge-popup" id="edgePopup">
+      <div class="ep-title">🔗 边详情 <span style="cursor:pointer;color:var(--text-dim)">✕</span></div>
+      <div class="ep-row"><span class="k">起点(SVG)</span><span class="v">STK-C01</span></div>
+      <div class="ep-row"><span class="k">起点(后端)</span><span class="v">STOCKER_C01@OUT</span></div>
+      <div class="ep-row"><span class="k">起点类型</span><span class="v">Stocker</span></div>
+      <div class="ep-row"><span class="k">终点(SVG)</span><span class="v">MIFA-01</span></div>
+      <div class="ep-row"><span class="k">搬送次数</span><span class="v hl">2,453</span></div>
+      <div class="ep-row" id="epCostRow" style="display:none"><span class="k">base_cost</span><span class="v hl">80.0</span></div>
+    </div>
+
+    <!-- 缩放按钮 -->
+    <div class="viewport-actions">
+      <div class="va-btn">+</div>
+      <div class="va-btn">−</div>
+      <div class="va-btn">⌂</div>
+    </div>
+
+    <!-- 保存浮动条（COST调整模式，有改动时） -->
+    <div class="save-bar" id="saveBar">
+      ⚠️ 有 3 条边已修改未保存
+      <button class="btn btn-primary btn-sm">保存</button>
+      <button class="btn btn-sm">放弃</button>
+    </div>
+
+    <!-- 设计标注 -->
+    <div class="annotation" style="right:360px; top:8px">← 路由展示区（所有模式共用）</div>
+  </div>
+
+  <!-- ===== 右侧：COST 编辑区（仅 COST调整 模式显示） ===== -->
+  <div class="cost-editor hidden" id="costEditor">
+    <div class="ce-header">
+      <div class="ce-title">✏️ COST 值编辑</div>
+      <div class="ce-actions">
+        <button class="btn btn-sm">➕ 新建版本</button>
+      </div>
+    </div>
+    <div class="ce-filter">
+      <input type="text" placeholder="筛选起点/终点..."/>
+      <button class="btn btn-sm">分类 ▾</button>
+    </div>
+    <div class="ce-body">
+      <div class="ce-group">
+        <div class="ceg-header">STOCKER 边 <span style="color:var(--text-dim); font-weight:normal">(高频)</span></div>
+        <div class="ce-row highlighted">
+          <span class="cer-route">STK-C01→MIFA-01</span>
+          <span class="cer-meta">
+            <span class="cer-count">2453</span>
+            <input type="number" value="80"/>
+          </span>
+        </div>
+        <div class="ce-row dirty">
+          <span class="cer-route">STK-D01→MIFA-02</span>
+          <span class="cer-meta">
+            <span class="cer-count">2104</span>
+            <input type="number" value="70" style="border-color:var(--warn)"/>
+          </span>
+        </div>
+        <div class="ce-row">
+          <span class="cer-route">STK-A02→MIFA-01</span>
+          <span class="cer-meta">
+            <span class="cer-count">1890</span>
+            <input type="number" value="85"/>
+          </span>
+        </div>
+        <div class="ce-row">
+          <span class="cer-route">STK-B01→MIFA-02</span>
+          <span class="cer-meta">
+            <span class="cer-count">1234</span>
+            <input type="number" value="90"/>
+          </span>
+        </div>
+      </div>
+      <div class="ce-group">
+        <div class="ceg-header">AREA 边</div>
+        <div class="ce-row">
+          <span class="cer-route">BUF-31C01→BUF-31C02</span>
+          <span class="cer-meta">
+            <span class="cer-count">567</span>
+            <input type="number" value="120"/>
+          </span>
+        </div>
+      </div>
+      <div class="ce-group">
+        <div class="ceg-header">PORTGROUP 边</div>
+        <div class="ce-row">
+          <span class="cer-route">PG-LIFT01→PG-STK01</span>
+          <span class="cer-meta">
+            <span class="cer-count">89</span>
+            <input type="number" value="50"/>
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="annotation" style="position:static; margin:8px; text-align:center; display:block">↑ COST值编辑区域（仅本模式）</div>
+  </div>
+
+  <!-- ===== 右侧：仿真结果区（仅 调整仿真 模式显示） ===== -->
+  <div class="sim-result hidden" id="simResult">
+    <div class="sr-header">🧪 仿真对比结果</div>
+    <div class="sr-body">
+      <div class="sim-compare">
+        <div class="sim-card baseline">
+          <div class="sc-label">基线压力</div>
+          <div class="sc-val">12,450</div>
+        </div>
+        <div class="sim-card candidate">
+          <div class="sc-label">候选压力</div>
+          <div class="sc-val" style="color:var(--success)">9,820</div>
+        </div>
+      </div>
+      <div style="font-size:11px; color:var(--success); margin-bottom:8px">↓ 降低 21.1% (优化有效)</div>
+      <div style="font-size:12px; color:var(--text-dim); margin-bottom:6px">边权重差异 Top：</div>
+      <div class="sim-diff">
+        <div class="drow"><span>STK-C01→MIFA-01</span><span class="down">80→65</span></div>
+        <div class="drow"><span>STK-D01→MIFA-02</span><span class="up">95→110</span></div>
+        <div class="drow"><span>STK-A02→MIFA-01</span><span class="down">85→70</span></div>
+        <div class="drow"><span>BUF-31C01→BUF-31C02</span><span class="up">120→135</span></div>
+        <div class="drow"><span>STK-B01→MIFA-02</span><span class="down">90→78</span></div>
+      </div>
+      <button class="btn btn-primary" style="width:100%; margin-top:10px">💾 保存为版本</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ===== 三大模式互斥切换 =====
+  const modeTabs = document.querySelectorAll('.mode-tab');
+  const ctxPressure = document.querySelector('.ctx-pressure');
+  const ctxCost = document.querySelector('.ctx-cost');
+  const ctxSim = document.querySelector('.ctx-sim');
+  const modeIndicator = document.getElementById('modeIndicator');
+  const costEditor = document.getElementById('costEditor');
+  const simResult = document.getElementById('simResult');
+  const routeArea = document.getElementById('routeArea');
+  const legendBox = document.getElementById('legendBox');
+  const edgePopup = document.getElementById('edgePopup');
+  const epCostRow = document.getElementById('epCostRow');
+  const saveBar = document.getElementById('saveBar');
+  const routeLines = document.getElementById('routeLines');
+
+  const modeConfig = {
+    pressure: {
+      ctx: ctxPressure, panel: null, indicatorClass: 'pressure',
+      title: '📊 历史压力分析',
+      legend: '<div class="lg-title">频次热力图例</div><div class="legend-row"><span class="grad"></span></div><div style="display:flex;justify-content:space-between;color:var(--text-dim);font-size:10px;margin-top:2px"><span>低频</span><span>高频</span></div>',
+      routeColor: '#2196f3', showCost: false, showSave: false
+    },
+    cost: {
+      ctx: ctxCost, panel: costEditor, indicatorClass: 'cost',
+      title: '✏️ COST 调整',
+      legend: '<div class="lg-title">路线类型图例</div><div class="legend-row"><span class="line" style="background:#2196f3"></span>历史路线</div><div class="legend-row"><span class="line" style="background:#e91e63"></span>COST边</div><div class="legend-row"><span class="line" style="background:#ff9800"></span>规划路线</div>',
+      routeColor: '#e91e63', showCost: true, showSave: true
+    },
+    sim: {
+      ctx: ctxSim, panel: simResult, indicatorClass: 'sim',
+      title: '🧪 调整仿真',
+      legend: '<div class="lg-title">差异图例</div><div class="legend-row"><span class="line" style="background:#f44336"></span>压力上升</div><div class="legend-row"><span class="line" style="background:#4caf50"></span>压力下降</div>',
+      routeColor: '#7b1fa2', showCost: false, showSave: false
+    }
+  };
+
+  function switchMode(mode) {
+    modeTabs.forEach(t => t.classList.toggle('active', t.dataset.mode === mode));
+    const cfg = modeConfig[mode];
+    // 切换上下文控件
+    [ctxPressure, ctxCost, ctxSim].forEach(c => c.classList.add('hidden'));
+    cfg.ctx.classList.remove('hidden');
+    // 切换右侧面板
+    costEditor.classList.add('hidden');
+    simResult.classList.add('hidden');
+    if (cfg.panel) cfg.panel.classList.remove('hidden');
+    // 模式标识
+    modeIndicator.className = 'mode-indicator ' + cfg.indicatorClass;
+    modeIndicator.textContent = cfg.title;
+    // 图例
+    legendBox.innerHTML = cfg.legend;
+    // 路线颜色
+    if (routeLines) routeLines.setAttribute('stroke', cfg.routeColor);
+    // 边详情的 cost 行
+    epCostRow.style.display = cfg.showCost ? '' : 'none';
+    // 保存条
+    saveBar.classList.toggle('show', cfg.showSave);
+  }
+
+  modeTabs.forEach(t => t.addEventListener('click', () => switchMode(t.dataset.mode)));
+  window.switchMode = switchMode;  // 暴露给内联 onclick
+
+  // 子模式切换
+  document.querySelectorAll('.submode-group').forEach(group => {
+    group.querySelectorAll('.submode-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        group.querySelectorAll('.submode-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+      });
+    });
+  });
+
+  // 路线类型多选
+  document.querySelectorAll('.rt-chip').forEach(chip => {
+    chip.addEventListener('click', () => chip.classList.toggle('active'));
+  });
+
+  // 默认显示压力模式
+  switchMode('pressure');
+</script>
+</body>
+</html>

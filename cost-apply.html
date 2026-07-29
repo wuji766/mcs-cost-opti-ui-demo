@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Cost 上线管理 · MCS Demo</title>
+<link rel="stylesheet" href="assets/app.css" />
+<style>
+  body { overflow: auto; height: auto; min-height: 100vh; }
+
+  .page-wrap { max-width: 1400px; margin: 0 auto; padding: 20px 24px 40px; }
+
+  .page-header {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    padding: 16px 20px;
+    margin-bottom: 18px;
+    border-radius: 0 4px 4px 0;
+  }
+  .page-header h1 { font-size: 20px; color: var(--accent); margin-bottom: 4px; }
+  .page-header p { color: var(--text-dim); font-size: 13px; }
+
+  .tabs {
+    display: flex;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 18px;
+  }
+  .tab {
+    padding: 11px 22px;
+    cursor: pointer;
+    color: var(--text-dim);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab .count {
+    background: var(--panel-2);
+    color: var(--text-dim);
+    font-size: 11px;
+    padding: 1px 7px;
+    border-radius: 10px;
+  }
+  .tab.active .count { background: var(--accent); color: #000; }
+
+  .toolbar-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  /* 上线记录表格 */
+  .record-table {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .record-table table { width: 100%; border-collapse: collapse; }
+  .record-table th {
+    background: var(--panel-2);
+    color: var(--text-dim);
+    font-size: 11px;
+    font-weight: normal;
+    padding: 11px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .record-table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .record-table tr:hover td { background: rgba(0,229,255,0.04); }
+  .record-table tr.current td { background: rgba(76,175,80,0.08); }
+  .record-table tr.rollback-row td { background: rgba(255,152,0,0.06); }
+
+  .status-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: bold;
+  }
+  .status-SUCCESS { background: rgba(76,175,80,0.2); color: var(--success); border:1px solid var(--success);}
+  .status-PARTIAL { background: rgba(255,152,0,0.2); color: var(--warn); border:1px solid var(--warn);}
+  .status-FAILED { background: rgba(244,67,54,0.2); color: var(--danger); border:1px solid var(--danger);}
+  .status-ROLLBACK { background: rgba(156,39,176,0.2); color: #ce93d8; border:1px solid #9c27b0;}
+  .status-AUTO { background: rgba(158,158,158,0.15); color: #9e9e9e; border:1px solid #9e9e9e;}
+
+  .type-tag {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 2px;
+    font-size: 10px;
+  }
+  .type-SCENARIO { background: rgba(76,175,80,0.15); color: var(--success); }
+  .type-BACKUP { background: rgba(158,158,158,0.15); color: #9e9e9e; }
+  .type-OPTIMIZED { background: rgba(33,150,243,0.15); color: var(--info); }
+
+  .current-badge {
+    background: var(--success);
+    color: #000;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: bold;
+    margin-left: 6px;
+  }
+
+  .info-box {
+    margin-top: 18px;
+    padding: 14px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .info-box .ib-title { color: var(--accent); font-size: 13px; margin-bottom: 8px; }
+  .info-box ul { color: var(--text-dim); font-size: 12px; line-height: 1.9; padding-left: 20px; }
+
+  /* 版本卡片网格 */
+  .version-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 14px;
+  }
+  .version-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    transition: all 0.15s;
+  }
+  .version-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3);}
+  .version-card.current { border-color: var(--success); border-width: 2px;}
+  .version-card.backup { opacity: 0.88; }
+  .vc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .vc-name { font-weight: bold; font-size: 14px; color: var(--text); }
+  .vc-meta { font-size: 11px; color: var(--text-dim); margin: 3px 0; }
+  .vc-actions { display: flex; gap: 6px; margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border); }
+  .stat-mini { display: flex; gap: 14px; margin: 8px 0; }
+  .stat-mini .item { font-size: 11px; }
+  .stat-mini .item .num { font-size: 17px; font-weight: bold; color: var(--accent); display:block;}
+  .stat-mini .item.success .num { color: var(--success); }
+
+  /* 回退弹窗 */
+  .modal-mask {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: none; align-items: center; justify-content: center;
+    z-index: 200;
+  }
+  .modal-mask.show { display: flex; }
+  .modal {
+    background: var(--panel);
+    border: 1px solid var(--warn);
+    border-radius: 6px;
+    width: 580px;
+    max-width: 92vw;
+    max-height: 88vh;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .modal-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .modal-header h3 { color: var(--warn); font-size: 16px; }
+  .modal-body { padding: 20px; }
+  .modal-body p { margin-bottom: 10px; line-height: 1.7;}
+  .modal-body .target-box {
+    background: var(--panel-2);
+    padding: 10px 12px;
+    border-radius: 4px;
+    border-left: 3px solid var(--accent);
+    margin: 12px 0;
+    font-size: 13px;
+  }
+  .warn-box {
+    background: rgba(255,152,0,0.1);
+    border: 1px solid var(--warn);
+    border-radius: 4px;
+    padding: 10px;
+    margin: 12px 0;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+  .diff-preview {
+    background: var(--panel-2);
+    border-radius: 4px;
+    padding: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    margin: 10px 0;
+    font-family: Consolas, monospace;
+    font-size: 11px;
+  }
+  .diff-row { display:flex; justify-content:space-between; padding:3px 6px;}
+  .diff-row:hover { background: rgba(255,255,255,0.04); }
+  .diff-old { color: var(--danger); }
+  .diff-new { color: var(--success); }
+  .modal-footer {
+    padding: 13px 20px;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: flex-end; gap: 8px;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    top: 60px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--success);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-size: 13px;
+    z-index: 300;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    display: none;
+  }
+  .toast.show { display: block; animation: toastIn 0.3s; }
+  @keyframes toastIn { from { opacity:0; transform: translate(-50%,-10px);} to {opacity:1; transform: translate(-50%,0);} }
+</style>
+</head>
+<body>
+
+<!-- ===== 全局导航 ===== -->
+<nav class="app-nav">
+  <div class="logo"><span class="dot"></span>MCS 搬送监控</div>
+  <div class="nav-links">
+    <a href="index.html">🏠 首页</a>
+    <a href="task-cost-merge.html">🔬 任务&amp;Cost</a>
+    <a class="active">🚀 Cost 上线</a>
+  </div>
+  <div class="spacer"></div>
+  <div class="user">UI Demo</div>
+</nav>
+
+<div class="page-wrap">
+  <div class="page-header">
+    <h1>🚀 Cost 上线管理</h1>
+    <p>管理 Cost 配置版本的上线发布、查看上线历史记录、一键回退到任意历史版本</p>
+  </div>
+
+  <!-- Tab 切换 -->
+  <div class="tabs">
+    <div class="tab active" data-tab="records">📋 上线记录 <span class="count" id="recCount">5</span></div>
+    <div class="tab" data-tab="versions">📦 版本管理 <span class="count">4</span></div>
+  </div>
+
+  <!-- ===== 上线记录 Tab ===== -->
+  <div id="tab-records">
+    <div class="toolbar-row">
+      <select id="filterOperator">
+        <option value="">全部操作人</option>
+        <option>admin</option>
+        <option>li_si</option>
+        <option>zhang_san</option>
+      </select>
+      <select id="filterStatus">
+        <option value="">全部状态</option>
+        <option>SUCCESS</option>
+        <option>PARTIAL</option>
+        <option>ROLLBACK</option>
+      </select>
+      <input type="text" id="searchInput" placeholder="搜索版本名..." style="width:220px"/>
+      <button class="btn btn-primary btn-sm" onclick="applyFilter()">🔍 筛选</button>
+      <div style="flex:1"></div>
+      <span style="color:var(--text-dim); font-size:12px" id="recordHint">显示 5 条记录</span>
+    </div>
+
+    <div class="record-table">
+      <table>
+        <thead>
+          <tr>
+            <th>记录ID</th>
+            <th>上线版本</th>
+            <th>类型</th>
+            <th>操作人</th>
+            <th>上线时间</th>
+            <th>状态</th>
+            <th>变更边数</th>
+            <th>警告</th>
+            <th>备份版本</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="recordBody"></tbody>
+      </table>
+    </div>
+
+    <div class="info-box">
+      <div class="ib-title">💡 上线记录说明</div>
+      <ul>
+        <li>每次上线会自动生成一个 <b>BACKUP 备份版本</b>（上线前 live 状态的镜像）+ 一条 <b>上线记录</b></li>
+        <li>"↩ 回退到此" = 把该记录对应的备份版本重新 apply 到线上，并生成一条 ROLLBACK 类型记录</li>
+        <li>回退操作同样会先备份当前线上状态，保证可二次回退（不会套娃丢失数据）</li>
+        <li>状态：SUCCESS 全部成功 / PARTIAL 部分边缺失 / FAILED 失败 / ROLLBACK 回退操作</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ===== 版本管理 Tab ===== -->
+  <div id="tab-versions" class="hidden">
+    <div class="toolbar-row">
+      <button class="btn btn-primary btn-sm" onclick="showToast('演示环境：新建版本功能在真实系统中从当前线上配置克隆')">+ 新建版本</button>
+      <select id="filterType">
+        <option value="">全部类型</option>
+        <option>SCENARIO</option>
+        <option>BACKUP</option>
+        <option>OPTIMIZED</option>
+      </select>
+      <div style="flex:1"></div>
+    </div>
+    <div class="version-grid" id="versionGrid"></div>
+  </div>
+</div>
+
+<!-- 回退确认弹窗 -->
+<div class="modal-mask" id="rollbackModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>⚠️ 确认回退到历史版本？</h3>
+      <button class="btn btn-sm" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">取消</button>
+      <button class="btn btn-warn" onclick="confirmRollback()">⚠️ 确认回退</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== Mock 数据 =====
+const records = [
+  { id:1024, version:'v2.1 减少绕行', type:'SCENARIO', operator:'admin', time:'2026-07-27 11:42', status:'SUCCESS', modified:234, warnings:0, backup:1023, current:true,
+    details:[{s:'STK-C01',d:'MIFA-01',o:100,n:80},{s:'STK-D01',d:'MIFA-02',o:95,n:70}] },
+  { id:1023, version:'系统基线 (上线前备份)', type:'BACKUP', operator:'admin', time:'2026-07-27 11:42', status:'AUTO', modified:0, warnings:0, backup:null, isBackup:true },
+  { id:1018, version:'回退到 v2.0', type:'BACKUP', operator:'li_si', time:'2026-07-26 09:15', status:'ROLLBACK', modified:156, warnings:2, backup:1017,
+    details:[{s:'STK-C01',d:'MIFA-01',o:80,n:100}] },
+  { id:1010, version:'v2.0 CMA-ES 优化结果', type:'OPTIMIZED', operator:'admin', time:'2026-07-25 14:30', status:'SUCCESS', modified:412, warnings:0, backup:1009,
+    details:[{s:'STK-A02',d:'MIFA-01',o:110,n:85}] },
+  { id:1005, version:'v1.9 紧急修复', type:'SCENARIO', operator:'zhang_san', time:'2026-07-24 16:08', status:'PARTIAL', modified:89, warnings:5, backup:1004,
+    details:[{s:'BUF-31C01',d:'BUF-31C02',o:135,n:120}] },
+];
+
+const versions = [
+  { id:1, name:'v2.1 减少绕行', type:'SCENARIO', notes:'降低高频 STOCKER 边 cost，引导绕行', operator:'admin', time:'2026-07-27 11:42', modified:234, total:1567, current:true },
+  { id:2, name:'v2.2 实验版本', type:'SCENARIO', notes:'测试用，尚未上线', operator:'admin', time:'2026-07-27 14:20', total:1567 },
+  { id:3, name:'v2.0 CMA-ES 优化', type:'OPTIMIZED', notes:'算法自动优化生成', operator:'system', time:'2026-07-25 14:00', total:1567 },
+  { id:4, name:'系统基线 (备份)', type:'BACKUP', notes:'#1024 上线前自动备份', operator:'admin', time:'2026-07-27 11:42', total:1567, isBackup:true },
+];
+
+let pendingRollbackId = null;
+
+// ===== 渲染上线记录 =====
+function renderRecords(list) {
+  const tbody = document.getElementById('recordBody');
+  if (list.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--text-dim);padding:40px">无匹配记录</td></tr>';
+    return;
+  }
+  tbody.innerHTML = list.map(r => {
+    const statusCls = r.status === 'AUTO' ? 'AUTO' : r.status;
+    const isRollback = r.status === 'ROLLBACK';
+    const rowCls = r.current ? 'current' : (isRollback ? 'rollback-row' : '');
+    const currentBadge = r.current ? '<span class="current-badge">当前线上</span>' : '';
+    const backupCell = r.backup ? `<span class="type-tag type-BACKUP">Backup #${r.backup}</span>` : '—';
+    const canRollback = r.backup !== null || isRollback;
+    const actionBtn = r.current
+      ? '<button class="btn btn-sm" onclick="showRecordDetail('+r.id+')">📋详情</button>'
+      : (canRollback
+        ? `<button class="btn btn-sm" onclick="showRecordDetail(${r.id})">📋</button> <button class="btn btn-warn btn-sm" onclick="openRollback(${r.id})">↩ 回退</button>`
+        : '<button class="btn btn-sm" onclick="showRecordDetail('+r.id+')">📋详情</button>');
+    return `<tr class="${rowCls}">
+      <td>#${r.id}</td>
+      <td><b>${r.version}</b>${currentBadge}</td>
+      <td><span class="type-tag type-${r.type}">${r.type}</span></td>
+      <td>${r.operator}</td>
+      <td>${r.time}</td>
+      <td><span class="status-tag status-${statusCls}">${r.status}</span></td>
+      <td style="color:var(--success);font-weight:bold">${r.modified||'—'}</td>
+      <td>${r.warnings||'—'}</td>
+      <td>${backupCell}</td>
+      <td>${actionBtn}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('recCount').textContent = list.length;
+  document.getElementById('recordHint').textContent = `显示 ${list.length} 条记录`;
+}
+
+function applyFilter() {
+  const op = document.getElementById('filterOperator').value;
+  const st = document.getElementById('filterStatus').value;
+  const kw = document.getElementById('searchInput').value.trim().toLowerCase();
+  const filtered = records.filter(r =>
+    (!op || r.operator === op) &&
+    (!st || r.status === st) &&
+    (!kw || r.version.toLowerCase().includes(kw))
+  );
+  renderRecords(filtered);
+}
+
+function showRecordDetail(id) {
+  const r = records.find(x => x.id === id);
+  if (!r.details || r.details.length === 0) {
+    showToast(`记录 #${id}：${r.version}（${r.status}），无变更明细（备份记录）`);
+    return;
+  }
+  showToast(`记录 #${id}：${r.version}，变更 ${r.modified} 条边，详情见回退弹窗的 diff 预览`);
+}
+
+// ===== 回退弹窗 =====
+function openRollback(id) {
+  const r = records.find(x => x.id === id);
+  pendingRollbackId = id;
+  // 回退 ROLLBACK 记录应读 target，普通记录读 backup
+  const targetVer = r.status === 'ROLLBACK' ? r.version : (r.backup ? `Backup #${r.backup}` : r.version);
+  const diffHtml = (r.details||[]).map(d =>
+    `<div class="diff-row"><span>${d.s} → ${d.d}</span><span><span class="diff-old">${d.o}</span> → <span class="diff-new">${d.n}</span></span></div>`
+  ).join('') || '<div style="text-align:center;color:var(--text-dim);padding:12px">该备份为完整快照，回退将恢复全部边</div>';
+
+  document.getElementById('modalBody').innerHTML = `
+    <p>你即将把线上 Cost 配置 <b>回退到</b>：</p>
+    <div class="target-box">
+      📦 <b>${targetVer}</b><br>
+      <span style="color:var(--text-dim); font-size:11px">来源于 ${r.time} 由 ${r.operator} 的${r.status==='ROLLBACK'?'回退':'上线'}操作</span>
+    </div>
+    <div class="warn-box">
+      ⚠️ 回退会<b>覆盖当前线上</b>的配置。系统会先自动备份当前状态（生成新 BACKUP），确保可再次回退。
+    </div>
+    <p>变更预览：</p>
+    <div class="diff-preview">${diffHtml}<div style="text-align:center;color:var(--text-dim);padding:4px">... 共 ${r.modified||'全部'} 条变更</div></div>
+  `;
+  document.getElementById('rollbackModal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('rollbackModal').classList.remove('show');
+  pendingRollbackId = null;
+}
+
+function confirmRollback() {
+  const r = records.find(x => x.id === pendingRollbackId);
+  closeModal();
+  // 模拟：在记录列表顶部插入一条 ROLLBACK 记录
+  const newId = Math.max(...records.map(x=>x.id)) + 1;
+  records.unshift({
+    id: newId, version: `回退到 ${r.version}`, type:'BACKUP', operator:'demo_user',
+    time: new Date().toLocaleString('zh-CN',{hour12:false}).replace(/\//g,'-'),
+    status:'ROLLBACK', modified: r.modified||0, warnings:0, backup: newId+1
+  });
+  // 取消其他 current 标记，把回退目标设为 current
+  records.forEach(x => { if (x.id !== r.id) x.current = false; });
+  applyFilter();
+  showToast(`✅ 已回退到「${r.version}」，生成新记录 #${newId}，当前线上已更新`);
+}
+
+// ===== 渲染版本卡片 =====
+function renderVersions(list) {
+  const grid = document.getElementById('versionGrid');
+  grid.innerHTML = list.map(v => {
+    const cls = v.current ? 'current' : (v.isBackup ? 'backup' : '');
+    const currentBadge = v.current ? '<span class="current-badge">当前线上</span>' : '';
+    const statMini = v.modified !== undefined
+      ? `<div class="stat-mini"><div class="item success"><span class="num">${v.modified}</span>变更边</div><div class="item"><span class="num">${v.total}</span>总边数</div></div>`
+      : `<div class="stat-mini"><div class="item"><span class="num">${v.total}</span>总边数</div></div>`;
+    let actions;
+    if (v.current) {
+      actions = `<button class="btn btn-sm" style="flex:1" onclick="location.href='task-cost-merge.html'">查看详情</button><button class="btn btn-sm" disabled style="flex:1">已上线</button>`;
+    } else if (v.isBackup) {
+      actions = `<button class="btn btn-sm" style="flex:1" onclick="location.href='task-cost-merge.html'">查看详情</button><button class="btn btn-warn btn-sm" style="flex:1" onclick="showToast('演示：回退到此备份版本')">↩ 回退到此</button>`;
+    } else {
+      actions = `<button class="btn btn-sm" style="flex:1" onclick="location.href='task-cost-merge.html'">编辑</button><button class="btn btn-primary btn-sm" style="flex:1" onclick="showToast('演示：上线发布 ${v.name}')">🚀 上线</button>`;
+    }
+    return `<div class="version-card ${cls}">
+      <div class="vc-header">
+        <div class="vc-name">${v.name}${currentBadge}</div>
+        <span class="type-tag type-${v.type}">${v.type}</span>
+      </div>
+      <div class="vc-meta">📝 ${v.notes||'无备注'}</div>
+      <div class="vc-meta">👤 ${v.operator} · 🕐 ${v.time}</div>
+      ${statMini}
+      <div class="vc-actions">${actions}</div>
+    </div>`;
+  }).join('');
+}
+
+document.getElementById('filterType').addEventListener('change', e => {
+  const t = e.target.value;
+  renderVersions(t ? versions.filter(v=>v.type===t) : versions);
+});
+
+// ===== Tab 切换 =====
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    const tab = t.dataset.tab;
+    document.getElementById('tab-records').classList.toggle('hidden', tab !== 'records');
+    document.getElementById('tab-versions').classList.toggle('hidden', tab !== 'versions');
+  });
+});
+
+// ===== Toast =====
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// 初始化
+renderRecords(records);
+renderVersions(versions);
+</script>
+</body>
+</html>
