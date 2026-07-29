@@ -670,20 +670,31 @@
         <g><rect x="230" y="400" width="90" height="26" fill="#3d2b1b" stroke="#ff9800"/><text x="275" y="417" fill="#ffb74d">MIFA-01</text></g>
         <g><rect x="580" y="400" width="90" height="26" fill="#3d2b1b" stroke="#ff9800"/><text x="625" y="417" fill="#ffb74d">MIFA-02</text></g>
       </g>
-      <!-- 路线（默认压力模式：蓝色按频次粗细） -->
-      <g id="routeLines" stroke="#2196f3" stroke-width="2.5" fill="none" opacity="0.75" marker-end="url(#arr-b)">
-        <path d="M97,97 Q200,200 275,400" stroke-width="2"/>
-        <path d="M182,97 Q230,220 275,400" stroke-width="3.5"/>
-        <path d="M407,97 Q340,230 275,400" stroke-width="4"/>
-        <path d="M492,97 Q560,230 625,400" stroke-width="3"/>
-        <path d="M717,97 Q680,230 625,400" stroke-width="4"/>
-        <path d="M97,227 Q180,320 275,400" stroke-width="2"/>
-        <path d="M182,227 Q220,320 275,400" stroke-width="2.5"/>
+      <!-- 路线（Viridis 染色 + log 粗细映射，data-count 为 mock 频次） -->
+      <g id="routeLines" stroke-width="2.5" fill="none" opacity="0.8">
+        <path d="M97,97 Q200,200 275,400" data-count="89"/>
+        <path d="M182,97 Q230,220 275,400" data-count="1200"/>
+        <path d="M407,97 Q340,230 275,400" data-count="3000" id="hl-edge"/>
+        <path d="M492,97 Q560,230 625,400" data-count="500"/>
+        <path d="M717,97 Q680,230 625,400" data-count="2330"/>
+        <path d="M97,227 Q180,320 275,400" data-count="34"/>
+        <path d="M182,227 Q220,320 275,400" data-count="156"/>
       </g>
+
+      <!-- 双向边演示（流动箭头线：难点3 修复方案） -->
+      <g id="bidirLines"></g>
+
       <!-- 高亮某条边 -->
-      <path d="M407,97 Q340,230 275,400" stroke="#ffb300" stroke-width="4.5" fill="none" opacity="0.7">
-        <animate attributeName="opacity" values="0.3;0.8;0.3" dur="1.5s" repeatCount="indefinite"/>
+      <path d="M407,97 Q340,230 275,400" stroke="#ffb300" stroke-width="4.5" fill="none" opacity="0.55" pointer-events="none">
+        <animate attributeName="opacity" values="0.25;0.7;0.25" dur="1.5s" repeatCount="indefinite"/>
       </path>
+
+      <!-- 未映射边提示（难点1 修复：可视化缺失） -->
+      <g id="unmappedHint" pointer-events="none">
+        <path d="M802,97 L760,250" stroke="#f44336" stroke-width="1.8" stroke-dasharray="4,3" fill="none" opacity="0.8"/>
+        <circle cx="760" cy="250" r="9" fill="rgba(244,67,54,0.25)" stroke="#f44336" stroke-width="1.2"/>
+        <text x="760" y="254" text-anchor="middle" fill="#f44336" font-size="11" font-weight="bold">?</text>
+      </g>
     </svg>
 
     <!-- 边详情浮层（点击边） -->
@@ -827,12 +838,85 @@
   const epCostRow = document.getElementById('epCostRow');
   const saveBar = document.getElementById('saveBar');
   const routeLines = document.getElementById('routeLines');
+  const bidirLines = document.getElementById('bidirLines');
+
+  // ===== Viridis 色板（紫→蓝→绿→黄，感知均匀+色盲友好） =====
+  const VIRIDIS = [[68,1,84],[71,40,120],[62,74,137],[49,104,142],[38,130,142],[31,158,137],[53,183,121],[110,205,81],[181,222,43],[253,231,37]];
+  function viridisColor(t){
+    t = Math.max(0, Math.min(1, t));
+    const i = t * (VIRIDIS.length - 1), i0 = Math.floor(i), i1 = Math.min(VIRIDIS.length-1, i0+1), f = i - i0;
+    const c0 = VIRIDIS[i0], c1 = VIRIDIS[i1];
+    return `rgb(${Math.round(c0[0]+(c1[0]-c0[0])*f)},${Math.round(c0[1]+(c1[1]-c0[1])*f)},${Math.round(c0[2]+(c1[2]-c0[2])*f)})`;
+  }
+  // log 变换染色 + 粗细映射（难点2 修复：长尾分布用 log 压缩）
+  function applyColormap(){
+    if (!routeLines) return;
+    const paths = routeLines.querySelectorAll('path[data-count]');
+    const counts = [...paths].map(p => +p.dataset.count).filter(c => c > 0);
+    if (counts.length === 0) return;
+    const maxC = Math.max(...counts);
+    paths.forEach(p => {
+      const c = +p.dataset.count;
+      const t = Math.log(1 + c) / Math.log(1 + maxC);   // log 变换压缩长尾
+      p.setAttribute('stroke', viridisColor(t));
+      p.setAttribute('stroke-width', (1.5 + t * 3.5).toFixed(1)); // 粗细也随 log 变化
+      p.setAttribute('opacity', (0.55 + t * 0.4).toFixed(2));
+    });
+  }
+  // ===== 双向边：流动箭头线（难点3 修复方案） =====
+  function drawBidirFlow(svg, x1, y1, x2, y2, color, val){
+    const NS = 'http://www.w3.org/2000/svg';
+    // 底线（半透明）
+    const ln = document.createElementNS(NS, 'line');
+    ln.setAttribute('x1',x1); ln.setAttribute('y1',y1); ln.setAttribute('x2',x2); ln.setAttribute('y2',y2);
+    ln.setAttribute('stroke',color); ln.setAttribute('stroke-width',1.8); ln.setAttribute('opacity',0.28); ln.setAttribute('stroke-linecap','round');
+    svg.appendChild(ln);
+    // 流动箭头三角形（指向运动方向，rotate:auto 自动转向）
+    const dur = '6s', n = 3;
+    for (let i = 0; i < n; i++){
+      const g = document.createElementNS(NS, 'g'); g.setAttribute('opacity', 0);
+      const core = document.createElementNS(NS, 'polygon');
+      core.setAttribute('points','-5,-4 6,0 -5,4'); core.setAttribute('fill',color); core.setAttribute('opacity',0.95);
+      g.appendChild(core);
+      const halo = document.createElementNS(NS, 'polygon');
+      halo.setAttribute('points','-7,-6 8,0 -7,6'); halo.setAttribute('fill',color); halo.setAttribute('opacity',0.2);
+      g.appendChild(halo);
+      const begin = (i * 6 / n).toFixed(2) + 's';
+      const amp = document.createElementNS(NS, 'animateMotion');
+      amp.setAttribute('dur', dur); amp.setAttribute('repeatCount','indefinite'); amp.setAttribute('begin', begin);
+      amp.setAttribute('path', `M${x1} ${y1} L${x2} ${y2}`); amp.setAttribute('rotate','auto');
+      g.appendChild(amp);
+      const ao = document.createElementNS(NS, 'animate');
+      ao.setAttribute('attributeName','opacity'); ao.setAttribute('values','0;1;1;0'); ao.setAttribute('keyTimes','0;0.12;0.88;1');
+      ao.setAttribute('dur', dur); ao.setAttribute('repeatCount','indefinite'); ao.setAttribute('begin', begin);
+      g.appendChild(ao);
+      svg.appendChild(g);
+    }
+    const t = document.createElementNS(NS, 'text');
+    t.setAttribute('x',(x1+x2)/2); t.setAttribute('y',(y1+y2)/2-7); t.setAttribute('text-anchor','middle');
+    t.setAttribute('fill',color); t.setAttribute('font-size',9); t.setAttribute('font-weight','bold');
+    t.textContent = val; svg.appendChild(t);
+  }
+  function renderBidirDemo(){
+    if (!bidirLines) return;
+    bidirLines.innerHTML = '';
+    // 一组双向边演示：STK-A02↔STK-C01
+    const gap = 7;
+    // A02(182,86) ↔ C01(407,86)：正向蓝高频，反向绿低频
+    drawBidirFlow(bidirLines, 182, 86-gap, 407, 86-gap, '#2196f3', '↔ 1850');
+    drawBidirFlow(bidirLines, 407, 86+gap, 182, 86+gap, '#4caf50', '↔ 420');
+    // STK-B02(182,216) ↔ STK-D01(717,86)：斜向双向
+    const dx = 717-182, dy = 86-216, len = Math.sqrt(dx*dx+dy*dy);
+    const nx = -dy/len, ny = dx/len;
+    drawBidirFlow(bidirLines, 182+nx*gap, 216+ny*gap, 717+nx*gap, 86+ny*gap, '#ffb300', '↔ 960');
+    drawBidirFlow(bidirLines, 717-nx*gap, 86-ny*gap, 182-nx*gap, 216-ny*gap, '#e91e63', '↔ 580');
+  }
 
   const modeConfig = {
     pressure: {
       ctx: ctxPressure, panel: null, indicatorClass: 'pressure',
       title: '📊 历史压力分析',
-      legend: '<div class="lg-title">频次热力图例</div><div class="legend-row"><span class="grad"></span></div><div style="display:flex;justify-content:space-between;color:var(--text-dim);font-size:10px;margin-top:2px"><span>低频</span><span>高频</span></div>',
+      legend: '<div class="lg-title">频次热力 (log+Viridis)</div><div class="legend-row"><span style="width:80px;height:9px;border-radius:2px;display:inline-block;background:linear-gradient(90deg,rgb(68,1,84),rgb(49,104,142),rgb(53,183,121),rgb(181,222,43),rgb(253,231,37))"></span></div><div style="display:flex;justify-content:space-between;color:var(--text-dim);font-size:10px;margin-top:2px"><span>低频</span><span>高频</span></div><div style="margin-top:6px;border-top:1px solid var(--border);padding-top:4px"><div style="color:var(--text-dim);font-size:10px;margin-bottom:3px">双向边方向</div><div style="display:flex;gap:10px;font-size:10px"><span style="color:#2196f3">▶ 正向</span><span style="color:#4caf50">▶ 反向</span></div></div>',
       routeColor: '#2196f3', showCost: false, showSave: false
     },
     cost: {
@@ -864,8 +948,17 @@
     modeIndicator.textContent = cfg.title;
     // 图例
     legendBox.innerHTML = cfg.legend;
-    // 路线颜色
-    if (routeLines) routeLines.setAttribute('stroke', cfg.routeColor);
+    // 路线染色：压力模式用 Viridis+log（每条独立色），其他模式用统一色
+    if (mode === 'pressure') {
+      applyColormap();
+    } else if (routeLines) {
+      routeLines.setAttribute('stroke', cfg.routeColor);
+    }
+    // 双向流动边：仅在压力模式显示（演示难点3修复）
+    if (bidirLines) bidirLines.style.display = (mode === 'pressure') ? '' : 'none';
+    // 未映射边提示：仅在压力模式显示（演示难点1修复）
+    const unmapped = document.getElementById('unmappedHint');
+    if (unmapped) unmapped.style.display = (mode === 'pressure') ? '' : 'none';
     // 边详情的 cost 行
     epCostRow.style.display = cfg.showCost ? '' : 'none';
     // 保存条
@@ -890,6 +983,8 @@
     chip.addEventListener('click', () => chip.classList.toggle('active'));
   });
 
+  // 初始化：渲染双向流动边 + Viridis 染色
+  renderBidirDemo();
   // 默认显示压力模式
   switchMode('pressure');
 </script>
