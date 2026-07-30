@@ -40,101 +40,21 @@
     font-size: 13px;
   }
 
-  /* ===== 顶部模式选择条（设计稿核心：三大模式互斥） ===== */
+  /* ===== 上下文工具条（b19 风格） ===== */
   .mode-bar {
-    height: 100px;
-    background: #FFFFFF;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    padding: 10px 0 0 0;  /* 顶部留白，按钮不贴浏览器最顶端 */
-  }
-  /* 第一行：Logo + 三大模式 Tab + 全局控件 */
-  .mode-bar .row1 {
-    height: 48px;
-    display: flex;
-    align-items: center;
-    padding: 0 16px;
-    gap: 24px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-    position: relative;
-    z-index: 20;  /* 提高层级，确保模式按钮始终可点击，不被 row2 遮挡 */
+    background: #fff;
+    border-bottom: 1px solid #DBDEE3;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
     flex-shrink: 0;
   }
-  .logo {
-    font-weight: bold;
-    color: var(--accent);
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    white-space: nowrap;
-  }
-  .logo .dot {
-    width: 8px; height: 8px;
-    background: var(--success);
-    border-radius: 50%;
-    box-shadow: 0 0 8px var(--success);
-    }
-
-  /* 三大模式切换（互斥 radio） */
-  .mode-tabs {
-    display: flex;
-    background: #DCEFFF;
-    border-radius: 4px;
-    padding: 0;
-    gap: 0;
-    border: 1px solid #a3d3f5;
-  }
-  .mode-tab {
-    padding: 6px 16px;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 500;
-    color: #333;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: all 0.15s;
-    border: none;
-    background: transparent;
-    font-family: "Microsoft YaHei";
-  }
-  .mode-tab .mi { font-size: 15px; }
-  .mode-tab:hover { color: #0067CC; background: rgba(0,103,204,0.06); }
-  .mode-tab.active { color: #fff; font-weight: bold; }
-  .mode-tab[data-mode="pressure"].active,
-  .mode-tab[data-mode="cost"].active,
-  .mode-tab[data-mode="sim"].active { background: #0067CC; }
-
-  .row1 .spacer { flex: 1; }
-  .row1 .global-ctrl {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-  }
-  .stat-pill {
-    background: rgba(0,103,204,0.08);
-    border: 1px solid var(--accent);
-    color: var(--accent);
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 11px;
-    white-space: nowrap;
-  }
-
-  /* 第二行：子模式 + 上下文控件（随主模式变化） */
   .mode-bar .row2 {
-    height: 44px;
+    min-height: 44px;
     display: flex;
     align-items: center;
-    padding: 0 16px;
+    padding: 8px 16px;
     gap: 14px;
-    background: rgba(0,0,0,0.2);
-    flex-shrink: 0;
-    overflow-x: auto;
-    overflow-y: hidden;
+    background: #F3F7FB;
+    flex-wrap: wrap;
     position: relative;
     z-index: 10;
   }
@@ -143,6 +63,42 @@
     align-items: center;
     gap: 14px;
     flex-wrap: nowrap;
+  }
+
+  /* ===== 左侧模式工具栏（画布风格） ===== */
+  .mode-toolbar {
+    width: 64px;
+    background: #fff;
+    border-right: 1px solid #DBDEE3;
+    display: flex;
+    flex-direction: column;
+    padding: 8px 0;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+  .mode-tool {
+    width: 56px; height: 56px;
+    margin: 0 4px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    color: #666;
+    font-family: "Microsoft YaHei";
+    transition: all 0.15s;
+  }
+  .mode-tool .mi { font-size: 20px; }
+  .mode-tool .t { font-size: 10px; }
+  .mode-tool:hover { background: #DCEFFF; color: #0067CC; }
+  .mode-tool.active {
+    background: linear-gradient(180deg, #3399FF 0%, #0067CC 100%);
+    color: #fff;
+    box-shadow: inset 0 -2px 0 0 #00488F;
   }
   .field {
     display: flex;
@@ -222,17 +178,15 @@
   .rt-chip.active[data-rt="cost"] { color: var(--rt-cost); }
 
   .btn {
-    background: var(--panel-2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    padding: 5px 12px;
-    border-radius: 3px;
-    cursor: pointer;
-    font-size: 12px;
-    transition: all 0.15s;
+    display:inline-flex;align-items:center;justify-content:center;
+    font-family:"Microsoft YaHei";font-size:13px;font-weight:bold;
+    height:28px;min-width:72px;padding:0 12px;border-radius:4px;cursor:pointer;
+    border:1px solid #D0D4DF;background-image:linear-gradient(180deg,#FFFFFF 0%,#E0E6F2 100%);
+    box-shadow:inset 0 -2px 0 0 #D0D4DF;color:#000;transition:filter 0.15s;
   }
-  .btn:hover { border-color: var(--accent); color: var(--accent); }
-  .btn-primary { background: var(--accent); color:#000; border-color:var(--accent); font-weight:bold;}
+  .btn:hover { filter:brightness(0.97); }
+  .btn-primary { background-image:linear-gradient(180deg,#3399FF 0%,#0067CC 100%);box-shadow:inset 0 -2px 0 0 #00488F;border-color:#00488F;color:#fff;font-weight:bold;}
+  .btn-primary:hover { filter:brightness(1.05); }
   .btn-primary:hover { background:#4dd8e8; color:#000;}
   .btn-sm { padding: 3px 8px; font-size: 11px; }
   .btn-danger { color: var(--danger); border-color: var(--danger); }
@@ -247,7 +201,7 @@
   /* ===== 主体区域 ===== */
   .main {
     display: flex;
-    height: calc(100vh - 144px);
+    height: calc(100vh - 96px);
     overflow: hidden;
   }
 
@@ -255,7 +209,7 @@
   .route-area {
     flex: 1;
     position: relative;
-    background: #FAFBFD;
+    background: #EEF2F7;
     overflow: hidden;
     min-width: 300px;
   }
@@ -280,7 +234,7 @@
   .legend-box {
     position: absolute;
     left: 16px; top: 60px;
-    background: rgba(26,31,38,0.92);
+    background: #fff;
     border: 1px solid var(--border);
     border-radius: 4px;
     padding: 8px 10px;
@@ -306,7 +260,7 @@
   .va-btn {
     width: 32px; height: 32px;
     border-radius: 50%;
-    background: rgba(26,31,38,0.9);
+    background: #fff;
     border: 1px solid var(--border);
     color: var(--text);
     cursor: pointer;
@@ -323,7 +277,7 @@
     position: absolute;
     right: 16px; top: 60px;
     width: 240px;
-    background: rgba(26,31,38,0.96);
+    background: #fff;
     border: 1px solid var(--accent);
     border-radius: 4px;
     padding: 10px;
@@ -507,38 +461,26 @@
 <!-- ===== 全局导航 ===== -->
 <nav class="app-nav">
   <div class="logo"><span class="dot"></span>MCS 搬送监控</div>
-  <div class="nav-links">
+   <div class="nav-links">
     <a href="index.html">🏠 首页</a>
-    <a class="active">🔬 任务&amp;Cost</a>
+    <a class="active" href="task-cost-merge.html">🔬 任务&amp;Cost</a>
     <a href="cost-apply.html">🚀 Cost 上线</a>
-  </div>
+    <a href="real-viz.html">📊 真实数据</a>
+   </div>
   <div class="spacer"></div>
   <div class="user">UI Demo</div>
 </nav>
 
-<!-- ===== 顶部模式选择条（设计稿核心） ===== -->
+<!-- ===== 上下文工具条（b19 风格，随模式变化） ===== -->
 <div class="mode-bar">
-  <!-- 第一行 -->
-  <div class="row1">
-    <div class="logo"><span class="dot"></span>MCS 搬送监控</div>
+  <!-- 子模式 + 上下文控件（随主模式变化，JS 控制） -->
+  <div class="row2" id="contextBar">
 
-    <!-- 三大模式互斥切换 -->
-    <div class="mode-tabs">
-      <button class="mode-tab active" data-mode="pressure" onclick="switchMode('pressure')"><span class="mi">📊</span>历史压力分析</button>
-      <button class="mode-tab" data-mode="cost" onclick="switchMode('cost')"><span class="mi">✏️</span>COST调整</button>
-      <button class="mode-tab" data-mode="sim" onclick="switchMode('sim')"><span class="mi">🧪</span>调整仿真</button>
-    </div>
-
-    <div class="spacer"></div>
-
-    <div class="global-ctrl">
+    <!-- 右侧全局统计 -->
+    <div style="margin-left:auto;display:flex;gap:8px">
       <span class="stat-pill">有效边 1,234</span>
       <span class="stat-pill">可达率 93.4%</span>
     </div>
-  </div>
-
-  <!-- 第二行：子模式 + 上下文控件（随主模式变化，JS 控制） -->
-  <div class="row2" id="contextBar">
 
     <!-- ===== 历史压力分析 模式的控件 ===== -->
     <div class="ctx ctx-pressure">
@@ -629,7 +571,20 @@
 <!-- ===== 主体 ===== -->
 <div class="main">
 
-  <!-- 左侧：路由展示区（所有模式都在） -->
+  <!-- 左侧模式工具栏（画布风格，垂直图标按钮） -->
+  <div class="mode-toolbar">
+    <button class="mode-tool active" data-mode="pressure" onclick="switchMode('pressure')" title="历史压力分析">
+      <span class="mi">📊</span><span class="t">压力</span>
+    </button>
+    <button class="mode-tool" data-mode="cost" onclick="switchMode('cost')" title="COST 调整">
+      <span class="mi">✏️</span><span class="t">COST</span>
+    </button>
+    <button class="mode-tool" data-mode="sim" onclick="switchMode('sim')" title="调整仿真">
+      <span class="mi">🧪</span><span class="t">仿真</span>
+    </button>
+  </div>
+
+  <!-- 路由展示区（所有模式都在） -->
   <div class="route-area" id="routeArea">
     <!-- 模式标识 -->
     <div class="mode-indicator pressure" id="modeIndicator">📊 历史压力分析 · 压力子模式</div>
@@ -826,7 +781,7 @@
 
 <script>
   // ===== 三大模式互斥切换 =====
-  const modeTabs = document.querySelectorAll('.mode-tab');
+  const modeTabs = document.querySelectorAll('.mode-tool');
   const ctxPressure = document.querySelector('.ctx-pressure');
   const ctxCost = document.querySelector('.ctx-cost');
   const ctxSim = document.querySelector('.ctx-sim');
