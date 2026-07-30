@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <title>任务分析 & Cost 编辑 · MCS Demo</title>
 <link rel="stylesheet" href="assets/app.css" />
+<link rel="stylesheet" href="assets/b19-components.css" />
 <style>
   :root {
     --bg: #F2F6FA;
@@ -79,31 +80,33 @@
   /* 三大模式切换（互斥 radio） */
   .mode-tabs {
     display: flex;
-    background: rgba(0,0,0,0.3);
-    border-radius: 6px;
-    padding: 3px;
-    gap: 2px;
+    background: #DCEFFF;
+    border-radius: 4px;
+    padding: 0;
+    gap: 0;
+    border: 1px solid #a3d3f5;
   }
   .mode-tab {
-    padding: 7px 18px;
-    border-radius: 4px;
+    padding: 6px 16px;
+    border-radius: 3px;
     cursor: pointer;
     font-size: 13px;
     font-weight: 500;
-    color: var(--text-dim);
+    color: #333;
     display: flex;
     align-items: center;
     gap: 6px;
     transition: all 0.15s;
     border: none;
     background: transparent;
+    font-family: "Microsoft YaHei";
   }
   .mode-tab .mi { font-size: 15px; }
-  .mode-tab:hover { color: var(--text); }
+  .mode-tab:hover { color: #0067CC; background: rgba(0,103,204,0.06); }
   .mode-tab.active { color: #fff; font-weight: bold; }
-  .mode-tab[data-mode="pressure"].active { background: var(--mode-pressure); }
-  .mode-tab[data-mode="cost"].active { background: var(--mode-cost); }
-  .mode-tab[data-mode="sim"].active { background: var(--mode-sim); }
+  .mode-tab[data-mode="pressure"].active,
+  .mode-tab[data-mode="cost"].active,
+  .mode-tab[data-mode="sim"].active { background: #0067CC; }
 
   .row1 .spacer { flex: 1; }
   .row1 .global-ctrl {

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>MCS 搬送监控系统 · UI Demo</title>
 <link rel="stylesheet" href="assets/app.css" />
+<link rel="stylesheet" href="assets/b19-components.css" />
 <style>
   body { overflow: auto; height: auto; min-height: 100vh; }
   .hero {
@@ -39,24 +40,24 @@
     padding: 0 24px;
   }
   .card {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 10px;
+    background: #fff;
+    border: 1px solid #DBDEE3;
+    border-radius: 4px;
     padding: 24px;
     text-decoration: none;
     color: inherit;
-    transition: all 0.2s;
+    transition: box-shadow 0.15s, border-color 0.15s;
     display: block;
+    box-shadow: 0 0 4px 0 rgba(0,0,0,0.1);
   }
   .card:hover {
-    border-color: var(--accent);
-    transform: translateY(-3px);
-    box-shadow: 0 8px 24px rgba(0,103,204,0.12);
+    border-color: #a3d3f5;
+    box-shadow: 0 2px 12px rgba(0,103,204,0.15);
   }
   .card .icon { font-size: 40px; margin-bottom: 12px; }
-  .card h2 { font-size: 19px; margin-bottom: 8px; }
-  .card h2.merged { color: var(--mode-cost); }
-  .card h2.apply { color: var(--success); }
+  .card h2 { font-size: 18px; margin-bottom: 8px; color: #333; }
+  .card h2.merged { color: #333; }
+  .card h2.apply { color: #333; }
   .card p { color: var(--text-dim); font-size: 13px; line-height: 1.7; margin-bottom: 14px; }
   .card .tags { display: flex; gap: 6px; flex-wrap: wrap; }
   .card .tag {

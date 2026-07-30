@@ -1,0 +1,119 @@
+/* ===== b19 组件样式（照搬 b19 项目的 Element Plus / DevExtreme 覆盖配方） ===== */
+/* 各页面引入此文件 + app.css，控件即可对齐 b19 风格 */
+
+/* ---------- 按钮（b19 渐变立体） ---------- */
+.b19-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: "Microsoft YaHei"; font-size: 13px; font-weight: bold;
+  height: 28px; min-width: 72px; padding: 0 12px;
+  border-radius: 4px; cursor: pointer; border: 1px solid #D0D4DF;
+  background-image: linear-gradient(180deg, #FFFFFF 0%, #E0E6F2 100%);
+  box-shadow: inset 0 -2px 0 0 #D0D4DF;
+  color: #000; transition: filter 0.15s;
+}
+.b19-btn:hover { filter: brightness(0.97); }
+.b19-btn-primary {
+  background-image: linear-gradient(180deg, #3399FF 0%, #0067CC 100%);
+  box-shadow: inset 0 -2px 0 0 #00488F;
+  border-color: #00488F; color: #fff;
+}
+.b19-btn-primary:hover { filter: brightness(1.05); }
+.b19-btn-sm { height: 24px; min-width: auto; padding: 0 8px; font-size: 12px; }
+.b19-btn-danger { color: #D50201; border-color: #D50201; }
+.b19-btn-danger:hover { background: #D50201; color: #fff; }
+.b19-btn-warn { color: #e67e22; border-color: #e67e22; }
+.b19-btn-warn:hover { background: #e67e22; color: #fff; }
+.b19-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ---------- 表格（b19 表头渐变 + 行 hover 浅蓝） ---------- */
+.b19-table {
+  width: 100%; border-collapse: collapse; background: #fff;
+  border: 1px solid #DBDEE3; border-radius: 4px; overflow: hidden;
+  box-shadow: 0 0 4px 0 rgba(0,0,0,0.1);
+  font-family: "Microsoft YaHei"; font-size: 12px;
+}
+.b19-table th {
+  background-image: linear-gradient(180deg, #EDF4FF 0%, #D0DCEB 100%);
+  color: #181818; font-weight: 700; font-size: 12px;
+  padding: 8px 12px; text-align: left; border-bottom: 1px solid #DBDEE3;
+  white-space: nowrap;
+}
+.b19-table td {
+  padding: 8px 12px; border-bottom: 1px solid #EBEEF2;
+  color: #333; white-space: nowrap;
+}
+.b19-table tr:hover td { background-color: #DCEFFF; }
+.b19-table tr.row-current td { background-color: #DCEFFF; }
+.b19-table tr.row-rollback td { background-color: #FFF4E6; }
+
+/* ---------- 状态标签 Tag（b19 danger=#D50201，其余 Element Plus 默认） ---------- */
+.b19-tag {
+  display: inline-block; padding: 1px 8px; border-radius: 3px;
+  font-size: 11px; font-weight: bold; line-height: 18px;
+}
+.b19-tag-success { background: #e1f3d8; color: #529b2e; border: 1px solid #b3e19d; }
+.b19-tag-warning { background: #faecd8; color: #b88230; border: 1px solid #f5dab1; }
+.b19-tag-danger  { background: #fde2e2; color: #D50201; border: 1px solid #fbc4c4; }
+.b19-tag-info    { background: #e9e9eb; color: #909399; border: 1px solid #d3d4d6; }
+.b19-tag-primary { background: #DCEFFF; color: #0067CC; border: 1px solid #a3d3f5; }
+.b19-tag-purple  { background: #f3e8f7; color: #7b1fa2; border: 1px solid #e0c2ec; }
+
+/* ---------- 卡片容器（b19 白底 + 边框 + 阴影 + 圆角） ---------- */
+.b19-card {
+  background: #fff; border: 1px solid #DBDEE3; border-radius: 4px;
+  box-shadow: 0 0 4px 0 rgba(0,0,0,0.1);
+}
+
+/* ---------- 页头标题栏（b19 .zi-page-title 标志配方） ---------- */
+.b19-page-title {
+  display: flex; align-items: center; gap: 8px;
+  height: 40px; padding-left: 16px; margin-bottom: 8px;
+  background: #F2F6FA; box-shadow: inset 0 1px 3px 0 rgba(0,0,0,0.2);
+  font-family: "Microsoft YaHei"; font-size: 14px; font-weight: 700; color: #333;
+}
+
+/* ---------- Tab 页签（b19 浅蓝头 + 主蓝激活） ---------- */
+.b19-tabs { display: flex; background: #DCEFFF; border-bottom: 1px solid #0067CC; }
+.b19-tab {
+  padding: 5px 16px; cursor: pointer; font-size: 12px; color: #333;
+  font-family: "PingFangSC-Semibold","Microsoft YaHei"; font-weight: 500;
+  border-right: 1px solid #BBBBBB;
+}
+.b19-tab:first-child { margin-left: 10px; }
+.b19-tab.is-active { background: #0067CC; color: #fff; border-color: #0067CC; }
+
+/* ---------- 输入框 / 下拉（b19 28px 高 + 主色 focus） ---------- */
+.b19-input, .b19-select {
+  height: 28px; padding: 0 8px; font-size: 12px; font-family: "Microsoft YaHei";
+  border: 1px solid #AAAAAA; border-radius: 4px; background: #fff; color: #333;
+  outline: none; box-sizing: border-box;
+}
+.b19-input:focus, .b19-select:focus { border-color: #0067CC; }
+
+/* ---------- 对话框（b19 标题加粗 + 浅遮罩） ---------- */
+.b19-modal-mask {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: none; align-items: center; justify-content: center; z-index: 200;
+}
+.b19-modal-mask.is-open { display: flex; }
+.b19-modal {
+  background: #fff; border-radius: 6px; min-width: 420px; max-width: 92vw;
+  max-height: 88vh; overflow: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+.b19-modal-header {
+  height: 44px; padding: 0 20px; display: flex; align-items: center;
+  justify-content: space-between; border-bottom: 1px solid #EBEEF2;
+  font-size: 16px; font-weight: bold; color: #333; font-family: "Microsoft YaHei";
+}
+.b19-modal-body { padding: 20px; font-size: 12px; color: #181818; line-height: 1.7; }
+.b19-modal-footer {
+  padding: 10px 20px; border-top: 1px solid #EBEEF2;
+  display: flex; justify-content: flex-end; gap: 8px;
+}
+
+/* ---------- 统计数字块 ---------- */
+.b19-stat { display: flex; gap: 20px; padding: 10px 0; }
+.b19-stat-item { font-size: 11px; color: #666; }
+.b19-stat-item b { display: block; font-size: 18px; color: #0067CC; font-weight: 700; font-family: "Microsoft YaHei"; }
+.b19-stat-item.danger b { color: #D50201; }
+.b19-stat-item.success b { color: #529b2e; }
