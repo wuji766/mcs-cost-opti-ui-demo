@@ -5,67 +5,88 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>真实数据可视化 · MCS</title>
 <style>
-  :root{--bg:#0f1419;--panel:#1a1f26;--panel2:#222831;--border:#2d3441;--text:#e6e9ef;--dim:#8b95a7;--accent:#00e5ff;--warn:#ffb300;--success:#4caf50;--danger:#f44336}
+  /* 主题对齐 b19：浅色工业后台（白底 + #0067CC 蓝 + #F2F6FA 页面背景） */
+  :root{
+    --page-bg:#F2F6FA; --panel:#FFFFFF; --panel-soft:#F3F7FB;
+    --border:#DBDEE3; --border-input:#AAAAAA;
+    --text:#333333; --text-strong:#181818; --text-dim:#666666;
+    --primary:#0067CC; --primary-light:#3399FF; --primary-dark:#00488F;
+    --accent-bg:#DCEFFF; --row-hover:#DCEFFF;
+    --danger:#D50201; --success:#2e7d32; --warn:#e67e22;
+    --radius:4px; --shadow:0 0 4px 0 rgba(0,0,0,0.1);
+    --font:"Microsoft YaHei","Microsoft YaHei-Bold",Arial,sans-serif;
+  }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;font-size:13px}
-  .topbar{height:44px;background:linear-gradient(90deg,#0a3d5c,#0d4a4f);display:flex;align-items:center;padding:0 16px;gap:16px;border-bottom:1px solid var(--accent)}
-  .topbar .logo{font-weight:bold;color:var(--accent);font-size:14px}
-  .topbar a{color:var(--dim);text-decoration:none;padding:6px 14px;border-radius:4px;font-size:13px}
-  .topbar a:hover{color:var(--text)}
-  .topbar a.active{background:var(--accent);color:#000}
+  body{font-family:var(--font);background:var(--page-bg);color:var(--text);height:100vh;overflow:hidden;font-size:12px}
+
+  /* 顶部导航（b19 风格：白底 + 阴影 + 主色选中） */
+  .topbar{height:40px;background:var(--panel);display:flex;align-items:center;padding:0 16px;gap:8px;box-shadow:0 2px 10px rgba(0,0,0,0.10);position:relative;z-index:10}
+  .topbar .logo{font-weight:bold;color:#000;font-size:14px;margin-right:24px}
+  .topbar a{color:var(--text-dim);text-decoration:none;padding:6px 14px;border-radius:var(--radius);font-size:13px}
+  .topbar a:hover{color:var(--primary);background:var(--accent-bg)}
+  .topbar a.active{background:var(--primary);color:#fff}
   .topbar .sp{flex:1}
-  .main{display:flex;height:calc(100vh - 44px)}
-  .left{flex:1;position:relative;background:#0a0e13;overflow:hidden}
+  .topbar .meta{color:var(--text-dim);font-size:12px}
+
+  .main{display:flex;height:calc(100vh - 40px)}
+
+  /* 左侧拓扑区（浅灰底） */
+  .left{flex:1;position:relative;background:#FAFBFD;overflow:hidden;border-right:1px solid var(--border)}
   .left svg{width:100%;height:100%;display:block}
-  .right{width:360px;background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
-  .rhead{padding:12px 14px;border-bottom:1px solid var(--border);background:var(--panel2)}
-  .rhead h3{font-size:14px;color:var(--accent);margin-bottom:4px}
-  .rhead .sub{color:var(--dim);font-size:11px}
-  .ctrls{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px}
-  .ctrl-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--dim)}
-  .ctrl-row label{white-space:nowrap;min-width:70px}
-  .btn{background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:4px 10px;border-radius:3px;cursor:pointer;font-size:11px;font-family:inherit}
-  .btn:hover{border-color:var(--accent);color:var(--accent)}
-  .btn.active{background:var(--accent);color:#000;font-weight:bold;border-color:var(--accent)}
+
+  /* 右侧面板（白卡片） */
+  .right{width:340px;background:var(--panel);display:flex;flex-direction:column;overflow:hidden}
+  .rhead{padding:10px 14px;border-bottom:1px solid var(--border);background:linear-gradient(180deg,#EDF4FF 0%,#D0DCEB 100%)}
+  .rhead h3{font-size:14px;color:var(--text-strong);margin-bottom:2px}
+  .rhead .sub{color:var(--text-dim);font-size:11px}
+  .ctrls{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px;background:var(--panel-soft)}
+  .ctrl-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text-dim)}
+  .ctrl-row label{white-space:nowrap;min-width:64px;color:var(--text)}
+  .btn{background:linear-gradient(180deg,#FFFFFF 0%,#E0E6F2 100%);border:1px solid #D0D4DF;color:#000;padding:4px 10px;border-radius:var(--radius);cursor:pointer;font-size:12px;font-family:inherit}
+  .btn:hover{border-color:var(--primary);color:var(--primary)}
+  .btn.active{background:linear-gradient(180deg,#3399FF 0%,#0067CC 100%);color:#fff;border-color:var(--primary-dark);font-weight:bold}
   .btns{display:flex;gap:4px;flex-wrap:wrap}
-  input[type=range]{accent-color:var(--accent);width:100%}
-  .rbody{flex:1;overflow-y:auto;padding:10px}
+  input[type=range]{accent-color:var(--primary);width:100%}
+  .rbody{flex:1;overflow-y:auto;padding:10px 14px}
   .rbody::-webkit-scrollbar{width:6px}
   .rbody::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
-  .stat{display:flex;gap:14px;padding:8px 0;font-size:11px}
-  .stat .item{color:var(--dim)}
-  .stat .item b{color:var(--accent);font-size:14px;display:block}
-  .edge-row{display:flex;justify-content:space-between;align-items:center;padding:5px 8px;border-bottom:1px solid var(--border);font-size:11px;cursor:pointer}
-  .edge-row:hover{background:rgba(0,229,255,0.06)}
-  .edge-row .route{font-family:Consolas;font-size:10px}
-  .edge-row .cnt{font-weight:bold}
-  .swatch{display:inline-block;width:14px;height:8px;border-radius:2px;margin-right:6px;vertical-align:middle}
-  .legend{position:absolute;left:14px;bottom:14px;background:rgba(26,31,38,0.92);border:1px solid var(--border);border-radius:4px;padding:8px 10px;font-size:11px;backdrop-filter:blur(4px)}
-  .legend .lt{color:var(--dim);font-size:10px;margin-bottom:4px}
-  .legend .bar{width:200px;height:10px;border-radius:2px;margin:2px 0}
-  .legend .scale{display:flex;justify-content:space-between;color:var(--dim);font-size:9px}
-  .note{padding:8px 12px;background:rgba(0,229,255,0.06);border-left:3px solid var(--accent);font-size:11px;color:var(--dim);line-height:1.6;margin:8px 0}
-  .badge{position:absolute;right:14px;top:14px;background:rgba(0,229,255,0.15);border:1px solid var(--accent);color:var(--accent);padding:4px 12px;border-radius:12px;font-size:11px}
 
-  /* ===== 真实SVG节点高对比度配色（替代原项目缺失的class样式） ===== */
-  /* 背景层：节点用高对比色，让站点清晰可见 */
-  #bg-layer .stocker-body{fill:#1a5fb4 !important;stroke:#4cc2ff !important;stroke-width:0.4 !important}
-  #bg-layer .lift-body{fill:#8e44ad !important;stroke:#d49aff !important;stroke-width:0.4 !important}
-  #bg-layer .mifa-body{fill:#e67e22 !important;stroke:#ffc04d !important;stroke-width:0.4 !important}
-  #bg-layer .area-node{fill:#0e7c7b !important;stroke:#4dd0d0 !important;stroke-width:0.35 !important}
-  #bg-layer .port-node{fill:#2e7d32 !important;stroke:#7fd47f !important;stroke-width:0.3 !important}
-  #bg-layer .equipment-group text{fill:#e6e9ef !important;font-weight:bold !important}
-  #bg-layer text{fill:#b8c2d0 !important}
+  .stat{display:flex;gap:16px;padding:8px 0 10px;border-bottom:1px solid var(--border);margin-bottom:8px}
+  .stat .item{color:var(--text-dim);font-size:11px}
+  .stat .item b{color:var(--primary);font-size:16px;display:block;font-family:var(--font)}
+
+  .edge-row{display:flex;justify-content:space-between;align-items:center;padding:5px 4px;border-bottom:1px solid #f0f2f5;font-size:11px;cursor:pointer}
+  .edge-row:hover{background:var(--row-hover)}
+  .edge-row .route{font-family:Consolas,monospace;font-size:10px;color:var(--text)}
+  .edge-row .cnt{font-weight:bold;color:var(--primary)}
+  .swatch{display:inline-block;width:16px;height:8px;border-radius:2px;margin-right:6px;vertical-align:middle}
+
+  /* 图例（浅色卡片，无 backdrop-blur） */
+  .legend{position:absolute;left:14px;bottom:14px;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:8px 10px;font-size:11px}
+  .legend .lt{color:var(--text-dim);font-size:10px;margin-bottom:4px}
+  .legend .bar{width:180px;height:9px;border-radius:2px;margin:2px 0;border:1px solid var(--border)}
+  .legend .scale{display:flex;justify-content:space-between;color:var(--text-dim);font-size:9px}
+
+  .badge{position:absolute;right:14px;top:14px;background:var(--accent-bg);border:1px solid var(--primary);color:var(--primary);padding:3px 12px;border-radius:12px;font-size:11px}
+
+  /* 真实SVG节点配色（浅色背景下，用 b19 主色系 + 设备语义色，保证对比度） */
+  #bg-layer .stocker-body{fill:#0067CC !important;stroke:#3399FF !important;stroke-width:0.4 !important}
+  #bg-layer .lift-body{fill:#7b1fa2 !important;stroke:#ba68c8 !important;stroke-width:0.4 !important}
+  #bg-layer .mifa-body{fill:#e67e22 !important;stroke:#ffb74d !important;stroke-width:0.4 !important}
+  #bg-layer .area-node{fill:#00838f !important;stroke:#4dd0e1 !important;stroke-width:0.35 !important}
+  #bg-layer .port-node{fill:#2e7d32 !important;stroke:#81c784 !important;stroke-width:0.3 !important}
+  #bg-layer .equipment-group text{fill:#181818 !important;font-weight:bold !important}
+  #bg-layer text{fill:#333333 !important}
 </style>
 </head>
 <body>
 <div class="topbar">
-  <div class="logo">MCS 真实数据可视化</div>
-  <a href="index.html">🏠 首页</a>
-  <a href="task-cost-merge.html">🔬 合并页</a>
-  <a class="active">📊 真实数据</a>
+  <div class="logo">MCS 搬送监控</div>
+  <a href="index.html">首页</a>
+  <a href="task-cost-merge.html">合并页</a>
+  <a class="active">真实数据</a>
   <div class="sp"></div>
-  <span style="color:var(--dim);font-size:12px">142,712 任务 · 368 边 · 188 节点</span>
+  <span class="meta">142,712 任务 · 368 边 · 188 节点</span>
 </div>
 <div class="main">
   <div class="left">
@@ -75,29 +96,29 @@
   </div>
   <div class="right">
     <div class="rhead">
-      <h3>📊 历史压力分析（真实数据）</h3>
+      <h3>历史压力分析</h3>
       <div class="sub">数据源：PG staging_macro · 2026-04-30 ~ 05-09</div>
     </div>
     <div class="ctrls">
       <div class="ctrl-row">
-        <label>染色方案</label>
+        <label>染色</label>
         <div class="btns">
-          <button class="btn active" data-cm="he" onclick="setCM('he')">直方图均衡化 ✅</button>
+          <button class="btn active" data-cm="he" onclick="setCM('he')">直方图均衡化</button>
           <button class="btn" data-cm="linear" onclick="setCM('linear')">线性</button>
-          <button class="btn" data-cm="log" onclick="setCM('log')">log变换</button>
+          <button class="btn" data-cm="log" onclick="setCM('log')">log</button>
         </div>
       </div>
       <div class="ctrl-row">
         <label>双向边</label>
         <div class="btns">
-          <button class="btn active" data-bd="flow" onclick="setBD('flow')">流动箭头 ✅</button>
+          <button class="btn active" data-bd="arrow" onclick="setBD('arrow')">静态箭头</button>
           <button class="btn" data-bd="parallel" onclick="setBD('parallel')">平行双线</button>
           <button class="btn" data-bd="net" onclick="setBD('net')">仅净流向</button>
         </div>
       </div>
       <div class="ctrl-row">
-        <label>最低频次 <span id="thVal" style="color:var(--accent)">≥1</span></label>
-        <input type="range" id="thresh" min="0" max="3000" value="0" oninput="onThresh(this.value)"/>
+        <label>最低频次 <span id="thVal" style="color:var(--primary);font-weight:bold">≥50</span></label>
+        <input type="range" id="thresh" min="0" max="3000" value="50" oninput="onThresh(this.value)"/>
       </div>
       <div class="ctrl-row">
         <label>显示</label>
@@ -109,33 +130,27 @@
     </div>
     <div class="rbody">
       <div class="stat">
-        <div class="item">显示边数<b id="sShow">0</b></div>
+        <div class="item">显示边<b id="sShow">0</b></div>
         <div class="item">双向对<b id="sPair">0</b></div>
         <div class="item">节点<b id="sNode">0</b></div>
-        <div class="item">未映射<b id="sUnmapped" style="color:#f44336">0</b></div>
+        <div class="item">未映射<b id="sUnmapped" style="color:var(--danger)">0</b></div>
       </div>
-      <div class="note" id="cmpNote">直方图均衡化：每个色阶覆盖相近数量的边（~37条/档），彻底解决长尾分布下低频边挤一团的问题。</div>
       <div id="edgeList"></div>
     </div>
   </div>
 </div>
 
 <script>
-let EDGES=[], LAYOUT={}, curCM='he', curBD='flow', curShow='all', thresh=0;
+let EDGES=[], LAYOUT={}, curCM='he', curBD='arrow', curShow='all', thresh=50;
 
-// Viridis 色板
 const VIR=[[68,1,84],[71,40,120],[62,74,137],[49,104,142],[38,130,142],[31,158,137],[53,183,121],[110,205,81],[181,222,43],[253,231,37]];
 function vir(t){t=Math.max(0,Math.min(1,t));const i=t*(VIR.length-1),i0=Math.floor(i),i1=Math.min(VIR.length-1,i0+1),f=i-i0,c0=VIR[i0],c1=VIR[i1];return `rgb(${Math.round(c0[0]+(c1[0]-c0[0])*f)},${Math.round(c0[1]+(c1[1]-c0[1])*f)},${Math.round(c0[2]+(c1[2]-c0[2])*f)})`;}
 
-// 直方图均衡化：基于 CDF
 let CDF_MAP={};
 function buildCDF(){
   const counts=[...new Set(EDGES.map(e=>e.count))].sort((a,b)=>a-b);
-  const m=counts.length;
-  CDF_MAP={};
-  counts.forEach((c,i)=>{CDF_MAP[c]=(i+1)/m;});
-  // 对不在集合里的值用 bisect
-  CDF_MAP._sorted=counts;
+  CDF_MAP={_sorted:counts};
+  counts.forEach((c,i)=>{CDF_MAP[c]=(i+1)/counts.length;});
 }
 function cdfVal(c){
   if(c in CDF_MAP) return CDF_MAP[c];
@@ -143,18 +158,15 @@ function cdfVal(c){
   while(lo<hi){const mid=(lo+hi)>>1;if(s[mid]<=c)lo=mid+1;else hi=mid;}
   return lo/s.length;
 }
-
 function colorOf(e){
-  const c=e.count, mx=Math.max(...EDGES.map(x=>x.count));
+  const c=e.count,mx=CDF_MAP._mx;
   let t;
-  if(curCM==='linear') t=c/mx;
-  else if(curCM==='log') t=Math.log(1+c)/Math.log(1+mx);
-  else t=cdfVal(c);  // 直方图均衡化
+  if(curCM==='linear')t=c/mx;
+  else if(curCM==='log')t=Math.log(1+c)/Math.log(1+mx);
+  else t=cdfVal(c);
   return vir(t);
 }
 
-// 加载数据
-let SVG_LOADED = false;
 async function init(){
   const [eRes,lRes,svgText]=await Promise.all([
     fetch('assets/real_edges.json').then(r=>r.json()),
@@ -163,21 +175,16 @@ async function init(){
   ]);
   EDGES=eRes.edges;
   LAYOUT=lRes;
-  // 嵌入真实仓库 SVG 布局作为背景
+  CDF_MAP._mx=Math.max(...EDGES.map(e=>e.count));
   const svg=document.getElementById('svg');
-  // 解析真实 SVG，把它的内容导入主 svg（保留 viewBox 0 0 297 210）
   const parser=new DOMParser();
   const doc=parser.parseFromString(svgText,'image/svg+xml');
   const srcSvg=doc.querySelector('svg');
-  // 把原始节点放入背景层（节点高对比配色，opacity 0.85 保证清晰）
-  const bg=mk('g',{id:'bg-layer'});
-  bg.setAttribute('opacity','0.85');
+  const bg=mk('g',{id:'bg-layer'});bg.setAttribute('opacity','0.9');
   [...srcSvg.children].forEach(c=>bg.appendChild(c));
   svg.appendChild(bg);
-  SVG_LOADED=true;
   buildCDF();
   document.getElementById('cntAll').textContent=EDGES.length;
-  // 双向对统计
   const pairs={};
   EDGES.forEach(e=>{const k=[e.from,e.to].sort().join('|');(pairs[k]=pairs[k]||[]).push(e);});
   document.getElementById('cntBidir').textContent=Object.values(pairs).filter(v=>v.length>=2).length;
@@ -189,130 +196,96 @@ function mk(t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAt
 
 function render(){
   const svg=document.getElementById('svg');
-  // 保留背景层(#bg-layer)，只清除边层和提示层
   ['edge-layer','unmapped-layer'].forEach(id=>{const el=svg.querySelector('#'+id);if(el)el.remove();});
 
-  // 过滤边
   let edges=EDGES.filter(e=>e.count>=thresh);
-  // 双向分组
   const pairs={};
   edges.forEach(e=>{const k=[e.from,e.to].sort().join('|');(pairs[k]=pairs[k]||[]).push(e);});
   if(curShow==='bidir'){
-    const bidirKeys=new Set(Object.entries(pairs).filter(([k,v])=>v.length>=2).map(([k])=>k));
-    edges=edges.filter(e=>bidirKeys.has([e.from,e.to].sort().join('|')));
+    const bk=new Set(Object.entries(pairs).filter(([k,v])=>v.length>=2).map(([k])=>k));
+    edges=edges.filter(e=>bk.has([e.from,e.to].sort().join('|')));
   }
 
-  // 节点不再自己画（真实SVG背景已含节点），只统计
   const nodeSet=new Set();
   edges.forEach(e=>{nodeSet.add(e.from);nodeSet.add(e.to);});
 
-  // 画边（叠加在背景层之上）
   const eg=mk('g',{id:'edge-layer'});
   const renderedKeys=new Set();
   let unmappedCount=0;
   edges.forEach(e=>{
     const p1=LAYOUT[e.from],p2=LAYOUT[e.to];
-    if(!p1||!p2){unmappedCount++;return;}  // 未映射边跳过并计数
+    if(!p1||!p2){unmappedCount++;return;}
     const key=[e.from,e.to].sort().join('|');
     const pair=pairs[key]||[];
     const isBidir=pair.length>=2;
     if(curBD==='net'&&isBidir){
-      // 仅净流向：取 count 大的方向
       if(renderedKeys.has(key))return;
       renderedKeys.add(key);
       const dominant=pair.reduce((a,b)=>a.count>b.count?a:b);
-      drawEdge(eg,dominant,colorOf(dominant),0);
-    } else if(curBD==='flow'){
-      drawFlowEdge(eg,e,colorOf(e));
+      drawEdge(eg,dominant,colorOf(dominant),0,true);
+    } else if(curBD==='arrow'){
+      drawEdge(eg,e,colorOf(e),isBidir?1.2:0,true);  // 静态箭头，无动画
     } else {
-      // parallel 或默认：双向各自偏移（viewBox 缩小后 offset=1.2）
-      const offset=isBidir?1.2:0;
-      drawEdge(eg,e,colorOf(e),offset);
+      drawEdge(eg,e,colorOf(e),isBidir?1.2:0,false);
     }
   });
   svg.appendChild(eg);
 
-  // 未映射边提示（难点1：可视化缺失，不静默丢弃）
   if(unmappedCount>0){
     const ul=mk('g',{id:'unmapped-layer'});
-    const badge=mk('text',{x:200,y:14,'text-anchor':'end',fill:'#f44336','font-size':4,'font-weight':'bold'});
-    badge.textContent=`⚠️ ${unmappedCount} 边未映射`;
+    const badge=mk('text',{x:290,y:10,'text-anchor':'end',fill:'#D50201','font-size':3.5,'font-weight':'bold'});
+    badge.textContent=`${unmappedCount} 边未映射`;
     ul.appendChild(badge);
     svg.appendChild(ul);
   }
 
-  // 统计
   document.getElementById('sShow').textContent=edges.length;
   document.getElementById('sPair').textContent=Object.values(pairs).filter(v=>v.length>=2).length;
   document.getElementById('sNode').textContent=nodeSet.size;
-  const um=document.getElementById('sUnmapped'); if(um) um.textContent=unmappedCount;
+  document.getElementById('sUnmapped').textContent=unmappedCount;
 
-  // 边列表（top 15）
   const list=document.getElementById('edgeList');
   const top=[...edges].sort((a,b)=>b.count-a.count).slice(0,15);
-  list.innerHTML='<div style="color:var(--accent);font-size:12px;margin-bottom:6px">Top 15 高频边</div>'+top.map(e=>{
+  list.innerHTML='<div style="color:var(--text-strong);font-size:12px;margin-bottom:6px;font-weight:bold">高频边 Top 15</div>'+top.map(e=>{
     const c=colorOf(e);
-    return `<div class="edge-row"><span><span class="swatch" style="background:${c}"></span><span class="route">${e.from}→${e.to}</span></span><span class="cnt" style="color:${c}">${e.count}</span></div>`;
+    return `<div class="edge-row"><span><span class="swatch" style="background:${c}"></span><span class="route">${e.from} → ${e.to}</span></span><span class="cnt">${e.count}</span></div>`;
   }).join('');
-
-  // 图例
   renderLegend();
 }
 
-function drawEdge(g,e,color,offset){
+function drawEdge(g,e,color,offset,withArrow){
   const p1=LAYOUT[e.from],p2=LAYOUT[e.to];if(!p1||!p2)return;
   let x1=p1.x,y1=p1.y,x2=p2.x,y2=p2.y;
   if(offset){const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy);if(len===0)return;const nx=-dy/len,ny=dx/len;x1+=nx*offset;y1+=ny*offset;x2+=nx*offset;y2+=ny*offset;}
-  // viewBox 297x210，线宽按比例缩小（0.15~0.6）
-  const path=mk('path',{d:`M${x1} ${y1} L${x2} ${y2}`,stroke:color,'stroke-width':Math.max(0.15,Math.log(1+e.count)/Math.log(1+100)*0.45),fill:'none',opacity:0.75,'stroke-linecap':'round'});
+  // 线宽按频次（log 缩放，viewBox 297x210）
+  const w=Math.max(0.2,Math.log(1+e.count)/Math.log(1+100)*0.5);
+  const path=mk('path',{d:`M${x1} ${y1} L${x2} ${y2}`,stroke:color,'stroke-width':w,fill:'none',opacity:0.78,'stroke-linecap':'round'});
   g.appendChild(path);
-}
-
-function drawFlowEdge(g,e,color){
-  const p1=LAYOUT[e.from],p2=LAYOUT[e.to];if(!p1||!p2)return;
-  const offset=1.2;  // 双向偏移按比例缩小
-  const dx=p2.x-p1.x,dy=p2.y-p1.y,len=Math.sqrt(dx*dx+dy*dy);if(len===0)return;
-  const nx=-dy/len,ny=dx/len;
-  const x1=p1.x+nx*offset,y1=p1.y+ny*offset,x2=p2.x+nx*offset,y2=p2.y+ny*offset;
-  // 底线
-  g.appendChild(mk('line',{x1,y1,x2,y2,stroke:color,'stroke-width':0.3,opacity:0.3,'stroke-linecap':'round'}));
-  // 流动箭头（慢速 6s，三角形尺寸按比例缩小）
-  const dur='6s',n=2;
-  for(let i=0;i<n;i++){
-    const f=mk('g',{opacity:0});
-    f.appendChild(mk('polygon',{points:'-1,-0.7 1.2,0 -1,0.7',fill:color,opacity:0.95}));
-    f.appendChild(mk('polygon',{points:'-1.5,-1.1 1.7,0 -1.5,1.1',fill:color,opacity:0.2}));
-    const begin=(i*6/n).toFixed(2)+'s';
-    const amp=mk('animateMotion',{dur,repeatCount:'indefinite',begin,path:`M${x1} ${y1} L${x2} ${y2}`,rotate:'auto'});
-    f.appendChild(amp);
-    const ao=mk('animate',{attributeName:'opacity',values:'0;1;1;0',keyTimes:'0;0.15;0.85;1',dur,repeatCount:'indefinite',begin});
-    f.appendChild(ao);
-    g.appendChild(f);
+  // 静态箭头（线终点处的三角形，指向终点方向）—— quieter：无动画
+  if(withArrow){
+    const ang=Math.atan2(y2-y1,x2-x1);
+    // 箭头退到线终点前一点，避免压住节点
+    const ax=x2-1.5*Math.cos(ang),ay=y2-1.5*Math.sin(ang);
+    const ar=0.9;
+    const tri=mk('polygon',{
+      points:`${ax+ar*Math.cos(ang)},${ay+ar*Math.sin(ang)} ${ax-ar*0.6*Math.cos(ang)-ar*0.6*Math.sin(ang)},${ay-ar*0.6*Math.sin(ang)+ar*0.6*Math.cos(ang)} ${ax-ar*0.6*Math.cos(ang)+ar*0.6*Math.sin(ang)},${ay-ar*0.6*Math.sin(ang)-ar*0.6*Math.cos(ang)}`,
+      fill:color,opacity:0.92
+    });
+    g.appendChild(tri);
   }
 }
 
 function renderLegend(){
   const lg=document.getElementById('legend');
   const grad='linear-gradient(90deg,'+VIR.map((c,i)=>`rgb(${c[0]},${c[1]},${c[2]}) ${(i/(VIR.length-1)*100).toFixed(0)}%`).join(',')+')';
-  const mx=Math.max(...EDGES.map(e=>e.count));
-  let scaleLabel='';
-  if(curCM==='he'){
-    scaleLabel='频次（均衡化刻度均匀）';
-  } else if(curCM==='linear'){
-    scaleLabel=`频次 1 ~ ${mx}（线性，低频挤一团）`;
-  } else {
-    scaleLabel=`频次 1 ~ ${mx}（log压缩）`;
-  }
-  lg.innerHTML=`<div class="lt">${curCM==='he'?'直方图均衡化':curCM==='linear'?'线性':'log变换'} + Viridis</div>
+  const mx=CDF_MAP._mx;
+  const label={he:'频次（均衡化，刻度均匀）',linear:`频次 1 ~ ${mx}（线性）`,log:`频次 1 ~ ${mx}（log）`}[curCM];
+  lg.innerHTML=`<div class="lt">${{he:'直方图均衡化',linear:'线性',log:'log变换'}[curCM]} + Viridis</div>
     <div class="bar" style="background:${grad}"></div>
-    <div class="scale"><span>低</span><span>${scaleLabel}</span><span>高</span></div>
-    <div style="margin-top:6px;border-top:1px solid var(--border);padding-top:4px;font-size:10px">
-      <div style="color:var(--dim);margin-bottom:2px">双向边方向（流动箭头）</div>
-      <div>▶ 箭头指向 = 货物流向</div>
-    </div>`;
+    <div class="scale"><span>低</span><span>${label}</span><span>高</span></div>`;
 }
 
-function setCM(m){curCM=m;document.querySelectorAll('[data-cm]').forEach(b=>b.classList.toggle('active',b.dataset.cm===m));document.getElementById('modeBadge').textContent=({he:'直方图均衡化+Viridis',linear:'线性+Viridis',log:'log变换+Viridis'})[m];document.getElementById('cmpNote').textContent={he:'直方图均衡化：每个色阶覆盖相近数量的边（~37条/档），彻底解决长尾分布下低频边挤一团的问题。',linear:'线性映射：count=155只映射到0.024，低频边全挤在紫色端无法区分。',log:'log变换：压缩长尾，但中高频段区分度不如均衡化。'}[m];render();}
+function setCM(m){curCM=m;document.querySelectorAll('[data-cm]').forEach(b=>b.classList.toggle('active',b.dataset.cm===m));document.getElementById('modeBadge').textContent={he:'直方图均衡化 + Viridis',linear:'线性 + Viridis',log:'log + Viridis'}[m];render();}
 function setBD(m){curBD=m;document.querySelectorAll('[data-bd]').forEach(b=>b.classList.toggle('active',b.dataset.bd===m));render();}
 function setShow(m){curShow=m;document.querySelectorAll('[data-sh]').forEach(b=>b.classList.toggle('active',b.dataset.sh===m));render();}
 function onThresh(v){thresh=+v;document.getElementById('thVal').textContent='≥'+v;render();}
