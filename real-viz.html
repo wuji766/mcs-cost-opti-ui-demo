@@ -257,16 +257,16 @@ function drawEdge(g,e,color,offset,withArrow){
   const p1=LAYOUT[e.from],p2=LAYOUT[e.to];if(!p1||!p2)return;
   let x1=p1.x,y1=p1.y,x2=p2.x,y2=p2.y;
   if(offset){const dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy);if(len===0)return;const nx=-dy/len,ny=dx/len;x1+=nx*offset;y1+=ny*offset;x2+=nx*offset;y2+=ny*offset;}
-  // 线宽按频次（log 缩放，viewBox 297x210）
-  const w=Math.max(0.2,Math.log(1+e.count)/Math.log(1+100)*0.5);
-  const path=mk('path',{d:`M${x1} ${y1} L${x2} ${y2}`,stroke:color,'stroke-width':w,fill:'none',opacity:0.78,'stroke-linecap':'round'});
+  // 线宽按频次（log 缩放，更细但高不透明度保证清晰）
+  const w=Math.max(0.1,Math.log(1+e.count)/Math.log(1+100)*0.35);
+  const path=mk('path',{d:`M${x1} ${y1} L${x2} ${y2}`,stroke:color,'stroke-width':w,fill:'none',opacity:0.92,'stroke-linecap':'round'});
   g.appendChild(path);
   // 静态箭头（线终点处的三角形，指向终点方向）—— quieter：无动画
   if(withArrow){
     const ang=Math.atan2(y2-y1,x2-x1);
     // 箭头退到线终点前一点，避免压住节点
-    const ax=x2-1.5*Math.cos(ang),ay=y2-1.5*Math.sin(ang);
-    const ar=0.9;
+    const ax=x2-1.2*Math.cos(ang),ay=y2-1.2*Math.sin(ang);
+    const ar=0.7;
     const tri=mk('polygon',{
       points:`${ax+ar*Math.cos(ang)},${ay+ar*Math.sin(ang)} ${ax-ar*0.6*Math.cos(ang)-ar*0.6*Math.sin(ang)},${ay-ar*0.6*Math.sin(ang)+ar*0.6*Math.cos(ang)} ${ax-ar*0.6*Math.cos(ang)+ar*0.6*Math.sin(ang)},${ay-ar*0.6*Math.sin(ang)-ar*0.6*Math.cos(ang)}`,
       fill:color,opacity:0.92

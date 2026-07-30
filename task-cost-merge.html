@@ -6,13 +6,13 @@
 <link rel="stylesheet" href="assets/app.css" />
 <style>
   :root {
-    --bg: #0f1419;
-    --panel: #1a1f26;
-    --panel-2: #222831;
-    --border: #2d3441;
-    --text: #e6e9ef;
-    --text-dim: #8b95a7;
-    --accent: #00e5ff;
+    --bg: #F2F6FA;
+    --panel: #FFFFFF;
+    --panel-2: #F3F7FB;
+    --border: #DBDEE3;
+    --text: #333333;
+    --text-dim: #666666;
+    --accent: #0067CC;
     --accent-2: #ffb300;
     --success: #4caf50;
     --danger: #f44336;
@@ -42,7 +42,7 @@
   /* ===== 顶部模式选择条（设计稿核心：三大模式互斥） ===== */
   .mode-bar {
     height: 100px;
-    background: linear-gradient(180deg, #0d4a4f, #0a3d5c);
+    background: #FFFFFF;
     border-bottom: 1px solid var(--border);
     display: flex;
     flex-direction: column;
@@ -74,9 +74,7 @@
     background: var(--success);
     border-radius: 50%;
     box-shadow: 0 0 8px var(--success);
-    animation: pulse 2s infinite;
-  }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    }
 
   /* 三大模式切换（互斥 radio） */
   .mode-tabs {
@@ -114,7 +112,7 @@
     align-items: center;
   }
   .stat-pill {
-    background: rgba(0,229,255,0.1);
+    background: rgba(0,103,204,0.08);
     border: 1px solid var(--accent);
     color: var(--accent);
     padding: 4px 10px;
@@ -254,7 +252,7 @@
   .route-area {
     flex: 1;
     position: relative;
-    background: #0a0e13;
+    background: #FAFBFD;
     overflow: hidden;
     min-width: 300px;
   }
@@ -269,7 +267,7 @@
     font-size: 12px;
     font-weight: bold;
     color: #fff;
-    backdrop-filter: blur(4px);
+    
   }
   .mode-indicator.pressure { background: rgba(224,49,49,0.85); }
   .mode-indicator.cost { background: rgba(25,118,210,0.85); }
@@ -283,7 +281,7 @@
     border: 1px solid var(--border);
     border-radius: 4px;
     padding: 8px 10px;
-    backdrop-filter: blur(4px);
+    
     font-size: 11px;
   }
   .legend-box .lg-title { color: var(--text-dim); margin-bottom: 6px; font-size: 10px; }
@@ -313,7 +311,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    backdrop-filter: blur(4px);
+    
   }
   .va-btn:hover { border-color: var(--accent); color: var(--accent); }
 
@@ -326,7 +324,7 @@
     border: 1px solid var(--accent);
     border-radius: 4px;
     padding: 10px;
-    backdrop-filter: blur(4px);
+    
     font-size: 11px;
   }
   .edge-popup .ep-title {
@@ -395,7 +393,7 @@
     font-size: 12px;
     cursor: pointer;
   }
-  .ce-row:hover { background: rgba(0,229,255,0.06); }
+  .ce-row:hover { background: rgba(0,103,204,0.06); }
   .ce-row.highlighted { background: rgba(255,179,0,0.15); border-left: 2px solid var(--accent-2); }
   .ce-row.dirty { background: rgba(255,152,0,0.1); }
   .ce-row .cer-route { font-family: Consolas; font-size: 11px; }
@@ -649,7 +647,7 @@
         <marker id="arr-c" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#e91e63"/></marker>
       </defs>
       <!-- 仓库房间 -->
-      <g stroke="#2d3441" fill="#15191f" stroke-width="1">
+      <g stroke="#DBDEE3" fill="#FAFBFD" stroke-width="1">
         <rect x="40" y="50" width="200" height="110" rx="4"/>
         <rect x="40" y="180" width="200" height="110" rx="4"/>
         <rect x="350" y="50" width="200" height="110" rx="4"/>
@@ -659,14 +657,14 @@
       </g>
       <!-- 设备节点 -->
       <g font-size="9" font-family="Consolas" text-anchor="middle">
-        <g><rect x="70" y="75" width="55" height="22" fill="#1b3a5c" stroke="#2196f3"/><text x="97" y="90" fill="#8be9fd">STK-A01</text></g>
-        <g><rect x="155" y="75" width="55" height="22" fill="#1b3a5c" stroke="#2196f3"/><text x="182" y="90" fill="#8be9fd">STK-A02</text></g>
-        <g><rect x="70" y="205" width="55" height="22" fill="#1b3a5c" stroke="#2196f3"/><text x="97" y="220" fill="#8be9fd">STK-B01</text></g>
-        <g><rect x="155" y="205" width="55" height="22" fill="#1b3a5c" stroke="#2196f3"/><text x="182" y="220" fill="#8be9fd">STK-B02</text></g>
-        <g><rect x="380" y="75" width="55" height="22" fill="#1b3a5c" stroke="#2196f3"/><text x="407" y="90" fill="#8be9fd">STK-C01</text></g>
-        <g><rect x="465" y="75" width="55" height="22" fill="#1b3a5c" stroke="#2196f3"/><text x="492" y="90" fill="#8be9fd">STK-C02</text></g>
-        <g><rect x="690" y="75" width="55" height="22" fill="#1b3a5c" stroke="#2196f3"/><text x="717" y="90" fill="#8be9fd">STK-D01</text></g>
-        <g><rect x="775" y="75" width="55" height="22" fill="#1b3a5c" stroke="#2196f3"/><text x="802" y="90" fill="#8be9fd">STK-D02</text></g>
+        <g><rect x="70" y="75" width="55" height="22" fill="#1b3a5c" stroke="#2196f3"/><text x="97" y="90" fill="#0067CC">STK-A01</text></g>
+        <g><rect x="155" y="75" width="55" height="22" fill="#1b3a5c" stroke="#2196f3"/><text x="182" y="90" fill="#0067CC">STK-A02</text></g>
+        <g><rect x="70" y="205" width="55" height="22" fill="#1b3a5c" stroke="#2196f3"/><text x="97" y="220" fill="#0067CC">STK-B01</text></g>
+        <g><rect x="155" y="205" width="55" height="22" fill="#1b3a5c" stroke="#2196f3"/><text x="182" y="220" fill="#0067CC">STK-B02</text></g>
+        <g><rect x="380" y="75" width="55" height="22" fill="#1b3a5c" stroke="#2196f3"/><text x="407" y="90" fill="#0067CC">STK-C01</text></g>
+        <g><rect x="465" y="75" width="55" height="22" fill="#1b3a5c" stroke="#2196f3"/><text x="492" y="90" fill="#0067CC">STK-C02</text></g>
+        <g><rect x="690" y="75" width="55" height="22" fill="#1b3a5c" stroke="#2196f3"/><text x="717" y="90" fill="#0067CC">STK-D01</text></g>
+        <g><rect x="775" y="75" width="55" height="22" fill="#1b3a5c" stroke="#2196f3"/><text x="802" y="90" fill="#0067CC">STK-D02</text></g>
         <g><rect x="230" y="400" width="90" height="26" fill="#3d2b1b" stroke="#ff9800"/><text x="275" y="417" fill="#ffb74d">MIFA-01</text></g>
         <g><rect x="580" y="400" width="90" height="26" fill="#3d2b1b" stroke="#ff9800"/><text x="625" y="417" fill="#ffb74d">MIFA-02</text></g>
       </g>

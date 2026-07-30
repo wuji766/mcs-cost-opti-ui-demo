@@ -1,24 +1,24 @@
-/* ===== MCS Demo 共享样式 ===== */
+/* ===== MCS Demo 共享样式（对齐 b19 浅色工业主题） ===== */
 :root {
-  --bg: #0f1419;
-  --panel: #1a1f26;
-  --panel-2: #222831;
-  --border: #2d3441;
-  --text: #e6e9ef;
-  --text-dim: #8b95a7;
-  --accent: #00e5ff;
-  --accent-2: #ffb300;
-  --success: #4caf50;
-  --danger: #f44336;
-  --warn: #ff9800;
-  --info: #2196f3;
-  --mode-pressure: #e03131;
-  --mode-cost: #1976d2;
+  --bg: #F2F6FA;            /* 页面背景（b19 主区域） */
+  --panel: #FFFFFF;         /* 卡片/面板 */
+  --panel-2: #F3F7FB;       /* 次级面板/表头底 */
+  --border: #DBDEE3;        /* 卡片边框（b19 实线） */
+  --text: #333333;          /* 主文字（b19） */
+  --text-dim: #666666;      /* 次要文字 */
+  --accent: #0067CC;        /* 主色（b19 primary） */
+  --accent-2: #e67e22;      /* 强调橙 */
+  --success: #2e7d32;
+  --danger: #D50201;        /* b19 danger */
+  --warn: #e67e22;
+  --info: #0067CC;
+  --mode-pressure: #0067CC;
+  --mode-cost: #0067CC;
   --mode-sim: #7b1fa2;
-  --rt-macro: #2196f3;
-  --rt-micro: #4caf50;
-  --rt-planned: #ff9800;
-  --rt-cost: #e91e63;
+  --rt-macro: #0067CC;
+  --rt-micro: #2e7d32;
+  --rt-planned: #e67e22;
+  --rt-cost: #c62828;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { height: 100vh; }
@@ -31,37 +31,35 @@ body {
   font-size: 13px;
 }
 
-/* ===== 全局顶部导航（多页共享） ===== */
+/* ===== 全局顶部导航（b19 风格：白底 + 阴影 + 主色选中） ===== */
 .app-nav {
-  height: 44px;
-  background: linear-gradient(90deg, #0a3d5c, #0d4a4f);
+  height: 40px;
+  background: var(--panel);
   display: flex;
   align-items: center;
   padding: 0 16px;
-  gap: 16px;
-  border-bottom: 1px solid var(--accent);
+  gap: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.10);
   flex-shrink: 0;
   position: relative;
   z-index: 50;
 }
 .app-nav .logo {
   font-weight: bold;
-  color: var(--accent);
+  color: #000;
   font-size: 14px;
   display: flex;
   align-items: center;
   gap: 8px;
   white-space: nowrap;
+  margin-right: 16px;
 }
 .app-nav .logo .dot {
   width: 8px; height: 8px;
   background: var(--success);
   border-radius: 50%;
-  box-shadow: 0 0 8px var(--success);
-  animation: pulse 2s infinite;
 }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-.app-nav .nav-links { display: flex; gap: 4px; margin-left: 16px; }
+.app-nav .nav-links { display: flex; gap: 4px; }
 .app-nav .nav-links a {
   color: var(--text-dim);
   padding: 6px 14px;
@@ -71,8 +69,8 @@ body {
   font-size: 13px;
   transition: all 0.15s;
 }
-.app-nav .nav-links a:hover { color: var(--text); background: rgba(255,255,255,0.06); }
-.app-nav .nav-links a.active { background: var(--accent); color: #000; font-weight: bold; }
+.app-nav .nav-links a:hover { color: var(--accent); background: #DCEFFF; }
+.app-nav .nav-links a.active { background: var(--accent); color: #fff; font-weight: bold; }
 .app-nav .spacer { flex: 1; }
 .app-nav .user { color: var(--text-dim); font-size: 12px; }
 
@@ -92,27 +90,27 @@ select, input[type="text"], input[type="number"] {
 select:focus, input:focus { border-color: var(--accent); }
 
 .btn {
-  background: var(--panel-2);
-  border: 1px solid var(--border);
-  color: var(--text);
+  background: linear-gradient(180deg,#FFFFFF 0%,#E0E6F2 100%);
+  border: 1px solid #D0D4DF;
+  color: #000;
   padding: 5px 12px;
-  border-radius: 3px;
+  border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
   transition: all 0.15s;
   font-family: inherit;
 }
 .btn:hover { border-color: var(--accent); color: var(--accent); }
-.btn-primary { background: var(--accent); color:#000; border-color:var(--accent); font-weight:bold;}
-.btn-primary:hover { background:#4dd8e8; color:#000;}
+.btn-primary { background: linear-gradient(180deg,#3399FF 0%,#0067CC 100%); color:#fff; border-color:#00488F; font-weight:bold;}
+.btn-primary:hover { background:linear-gradient(180deg,#4da9ff 0%,#0077e0 100%); color:#fff;}
 .btn-sm { padding: 3px 8px; font-size: 11px; }
 .btn-danger { color: var(--danger); border-color: var(--danger); }
 .btn-danger:hover { background: var(--danger); color:#fff;}
 .btn-warn { color: var(--warn); border-color: var(--warn); }
-.btn-warn:hover { background: var(--warn); color:#000;}
+.btn-warn:hover { background: var(--warn); color:#fff;}
 
 .stat-pill {
-  background: rgba(0,229,255,0.1);
+  background: #DCEFFF;
   border: 1px solid var(--accent);
   color: var(--accent);
   padding: 4px 10px;
